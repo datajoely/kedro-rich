@@ -100,7 +100,7 @@ def commands():
 @click.option(
     "--params", type=str, default="", help=PARAMS_ARG_HELP, callback=_split_params
 )
-def run_snazzy(
+def rrun(
     tag,
     env,
     parallel,

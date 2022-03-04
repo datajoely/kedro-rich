@@ -31,3 +31,17 @@ install-pre-commit: install-test-requirements
 uninstall-pre-commit:
 	pre-commit uninstall
 	pre-commit uninstall --hook-type pre-push
+
+test-run:
+	pip uninstall kedro-rich -y
+	make install
+	rm -rf test_project/
+	yes test_project | kedro new --starter=spaceflights
+	pip install -r test_project/src/requirements.txt
+	touch .telemetry
+	echo "consent: false" >> .telemetry
+	mv .telemetry test_project/
+	cd test_project; kedro rrun
+
+clear-test-run:
+	rm -rf test_project/

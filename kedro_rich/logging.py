@@ -24,6 +24,8 @@ def apply_rich_logging_handler():
             logging_config["handlers"]["console"] = {
                 "class": "rich.logging.RichHandler",
                 "level": "INFO",
+                "markup": False,
+                "log_time_format": "[%X]",
             }
             return logging_config
 

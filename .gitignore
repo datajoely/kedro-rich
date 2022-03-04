@@ -144,3 +144,5 @@ venv.bak/
 .pytest_cache/
 docs/tmp-build-artifacts
 docs/build
+
+test_project/
