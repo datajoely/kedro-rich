@@ -35,7 +35,7 @@ Tell us what happens instead.
 ## Your Environment
 Include as many relevant details about the environment in which you experienced the bug:
 
-* Kedro-telemetry version used (`pip show kedro-telemetry`):
+* Kedro-rich version used (`pip show kedro-rich`):
 * Kedro version used (`pip show kedro` or `kedro -V`):
 * Python version used (`python -V`):
 * Operating system and version:

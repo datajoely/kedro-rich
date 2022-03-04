@@ -1,13 +1,9 @@
+"""This module provides lifecycle hooks to track progress"""
 import os
 import time
 from datetime import timedelta
 from functools import reduce
 from typing import Any, Dict, List, Optional, Set, Tuple
-from pathlib import Path
-import logging
-
-import click
-import kedro
 
 from kedro.framework.hooks import hook_impl
 from kedro.io import DataCatalog
@@ -15,28 +11,30 @@ from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
 from rich.progress import BarColumn, Progress, ProgressColumn, Task, TaskID
 from rich.text import Text
-from rich.traceback import install
-from rich.logging import RichHandler
 
-from kedro_rich.settings import RICH_ENABLED_ENV    
+from kedro_rich.settings import RICH_ENABLED_ENV
+
 
 class RichHooks:
+    """These set of hooks add progress information to the output of a Kedro run"""
+
     def __init__(self):
+        """This constructor initialises the variables used to manage state"""
         self.progress = None
         self.task_count = 0
         self.io_datasets_in_catalog = {}
         self.pipeline_inputs = {}
         self.pipeline_outputs = {}
         self.tasks = {}
-        #_install_rich_traceback()
-        _install_rich_logging_handler()
 
     @hook_impl
     def before_pipeline_run(
         self, run_params: Dict[str, Any], pipeline: Pipeline, catalog: DataCatalog
     ):
-        if os.environ.get(RICH_ENABLED_ENV):
-
+        """This method initialises the variables needed to track pipeline process"""
+        if bool(
+            os.environ.get(RICH_ENABLED_ENV, False)
+        ):  # disable under ParallelRunner
             self.progress = Progress(
                 _KedroElapsedColumn(),
                 "[progress.description]{task.description}",
@@ -44,7 +42,11 @@ class RichHooks:
                 "[progress.percentage]{task.percentage:>3.0f}%",
                 "{task.fields[activity]}",
             )
+
+            # Get pipeline goals
             self._init_progress_tasks(pipeline, catalog)
+
+            # Init tasks
             pipe_name = run_params.get("pipeline_name") or "__default__"
             self.tasks = {
                 "overall": self._add_progress_task(
@@ -52,17 +54,22 @@ class RichHooks:
                     count=self.task_count,
                 ),
                 "loads": self._add_progress_task(
-                    description=f"Loading datasets", count=len(self.pipeline_inputs)
+                    description="Loading datasets", count=len(self.pipeline_inputs)
                 ),
                 "saves": self._add_progress_task(
-                    description=f"Saving datasets", count=len(self.pipeline_outputs)
+                    description="Saving datasets", count=len(self.pipeline_outputs)
                 ),
             }
 
+            # Start process
             self.progress.start()
 
     @hook_impl
-    def after_dataset_loaded(self, dataset_name):
+    def after_dataset_loaded(self, dataset_name: str):
+        """
+        Add the last dataset loaded (from persistent storage)
+        to progress display
+        """
         if self.progress:
             dataset_name_namespaced = dataset_name.replace(".", "__")
             if dataset_name in self.pipeline_inputs:
@@ -76,6 +83,7 @@ class RichHooks:
 
     @hook_impl
     def after_dataset_saved(self, dataset_name: str):
+        """Add the last dataset persisted to progress display"""
         if self.progress:
             dataset_name_namespaced = dataset_name.replace(".", "__")
 
@@ -98,6 +106,7 @@ class RichHooks:
 
     @hook_impl
     def before_node_run(self, node: Node):
+        """Add the current function name to progress display"""
         if self.progress:
             self.progress.update(
                 self.tasks["overall"],
@@ -105,13 +114,15 @@ class RichHooks:
             )
 
     @hook_impl
-    def after_node_run(self, node):
+    def after_node_run(self):
+        """Increment the task count on node completion"""
         if self.progress:
             self.progress.update(self.tasks["overall"], advance=1)
             time.sleep(0.3)
 
     @hook_impl
     def after_pipeline_run(self):
+        """Hook to complete and clean up progress information on pipeline completion"""
         if self.progress:
             self.progress.update(
                 self.tasks["overall"],
@@ -125,7 +136,6 @@ class RichHooks:
     def _init_progress_tasks(self, pipeline: Pipeline, catalog: DataCatalog):
         self.task_count = len(pipeline.nodes)
         self.io_datasets_in_catalog = self._get_persisted_datasets(catalog)
-
         (
             self.pipeline_inputs,
             self.pipeline_outputs,
@@ -133,6 +143,7 @@ class RichHooks:
 
     @staticmethod
     def _get_persisted_datasets(catalog: DataCatalog) -> Dict[str, str]:
+        """Identify ephemeral datasets"""
         non_memory_datasets = {
             k: type(v).__name__
             for k, v in catalog.datasets.__dict__.items()
@@ -144,6 +155,13 @@ class RichHooks:
     def _get_persisted_datasets_in_scope(
         non_memory: Dict[str, str], pipe: Pipeline
     ) -> Tuple[Dict[str, str], Dict[str, str]]:
+        """
+        Retrieve datasets (inputs and outputs) which are either
+        loaded from or written to disk as part of the pipeline in scope.
+
+        This function also ensures namespaces are correctly rationalised.
+        """
+
         def _clean_names(datasets: List[str], namespace: Optional[str]) -> Set[str]:
             if namespace:
                 return {x.replace(".", "__") for x in datasets}
@@ -165,20 +183,10 @@ class RichHooks:
         return self.progress.add_task(description, total=count, activity="")
 
 
-def _install_rich_traceback():
-    install(show_locals=False, suppress=[click, kedro])
-
-def _install_rich_logging_handler():
-    logging.basicConfig(
-        level="INFO",
-        handlers=[RichHandler(rich_tracebacks=True)]
-    )
-
-
 class _KedroElapsedColumn(ProgressColumn):
     """Renders time elapsed for top task only"""
 
-    def render(self, task: "Task") -> Text:
+    def render(self, task: Task) -> Text:
         """Show time remaining."""
         if task.id == 0:
             elapsed = task.finished_time if task.finished else task.elapsed
@@ -186,6 +194,7 @@ class _KedroElapsedColumn(ProgressColumn):
                 return Text("-:--:--", style="cyan")
             delta = timedelta(seconds=int(elapsed))
             return Text(str(delta), style="green")
+        return None
 
 
-hooks = RichHooks()
+rich_hooks = RichHooks()

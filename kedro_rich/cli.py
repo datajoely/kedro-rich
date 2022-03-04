@@ -1,7 +1,7 @@
 """Command line tools for manipulating a Kedro project.
 Intended to be invoked via `kedro`."""
-from itertools import chain
 import os
+from itertools import chain
 from pathlib import Path
 from typing import Iterable, Tuple
 
@@ -55,12 +55,12 @@ def _get_values_as_tuple(values: Iterable[str]) -> Tuple[str, ...]:
     return tuple(chain.from_iterable(value.split(",") for value in values))
 
 
-@click.group(context_settings=CONTEXT_SETTINGS, name=__file__)
-def cli():
+@click.group(context_settings=CONTEXT_SETTINGS, name="kedro-rich")
+def commands():
     """Command line tools for manipulating a Kedro project."""
 
 
-@cli.command()
+@commands.command()
 @click.option(
     "--from-inputs", type=str, default="", help=FROM_INPUTS_HELP, callback=split_string
 )
@@ -100,7 +100,7 @@ def cli():
 @click.option(
     "--params", type=str, default="", help=PARAMS_ARG_HELP, callback=_split_params
 )
-def run(
+def run_snazzy(
     tag,
     env,
     parallel,
@@ -113,11 +113,10 @@ def run(
     to_outputs,
     load_version,
     pipeline,
-    config,
+    config,  # pylint: disable=unused-argument
     params,
-):
+):  # pylint: disable=too-many-arguments, too-many-locals
     """Run the pipeline."""
-
     if parallel and runner:
         raise KedroCliError(
             "Both --parallel and --runner options cannot be used together. "
@@ -125,17 +124,16 @@ def run(
         )
     runner = runner or "SequentialRunner"
     if parallel:
-        os.environ[RICH_ENABLED_ENV] = False
+        os.environ[RICH_ENABLED_ENV] = "False"
         runner = "ParallelRunner"
     else:
-        os.environ[RICH_ENABLED_ENV] = True
-        
+        os.environ[RICH_ENABLED_ENV] = "True"
+
     runner_class = load_obj(runner, "kedro.runner")
 
     tag = _get_values_as_tuple(tag) if tag else tag
     node_names = _get_values_as_tuple(node_names) if node_names else node_names
-
-    package_name = str(Path(__file__).resolve().parent.name)
+    package_name = str(Path.cwd().resolve().name)
     with KedroSession.create(package_name, env=env, extra_params=params) as session:
         session.run(
             tags=tag,

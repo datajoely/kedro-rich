@@ -23,19 +23,19 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 setup(
     name=name,
     version=version,
-    description="Kedro-Telemetry",
+    description="Kedro-Rich",
     long_description=readme,
     long_description_content_type="text/markdown",
-    url="https://github.com/kedro-org/kedro-plugins/tree/main/kedro-telemetry",
     author="Kedro",
     python_requires=">=3.6, <3.9",
     install_requires=requires,
     license="Apache Software License (Apache 2.0)",
-    packages=["kedro_telemetry"],
+    packages=["kedro_rich"],
     include_package_data=True,
     zip_safe=False,
     entry_points={
-        "kedro.cli_hooks": ["kedro-rich = kedro_rich.plugin:cli_hooks"],
-        "kedro.hooks" : ["kedro-rich = kedro_rich.hooks:lifecycle_hooks"]
+        "kedro.global_commands": ["kedro_rich_command = kedro_rich.cli:commands"],
+        "kedro.hooks" : ["kedro_rich_progress = kedro_rich.hooks:rich_hooks"],
+        "kedro.init" : ["kedro_rich_logging = kedro_rich.logging:rich_logging"]
     },
 )
