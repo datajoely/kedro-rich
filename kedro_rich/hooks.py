@@ -1,4 +1,5 @@
 """This module provides lifecycle hooks to track progress"""
+import logging
 import os
 import time
 from datetime import timedelta
@@ -69,6 +70,9 @@ class RichHooks:
 
             # Start process
             self.progress.start()
+        else:
+            logger = logging.getLogger(__name__)
+            logger.warning("Rich progress bars are incompatible with ParallelRunner")
 
     @hook_impl
     def after_dataset_loaded(self, dataset_name: str):
