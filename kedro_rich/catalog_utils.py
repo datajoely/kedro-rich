@@ -44,3 +44,18 @@ def filter_datasets_by_pipeline(
     persisted_outputs = {k: v for k, v in datasets.items() if k in outputs}
 
     return persisted_inputs, persisted_outputs
+
+
+def resolve_pipeline_namespace(dataset_name: str) -> str:
+    """Resolves the dot to double underscore namespace
+    discrepancy between pipeline inputs and catalog keys
+    """
+    return dataset_name.replace(".", "__")
+
+
+def split_catalog_namespace_key(dataset_name: str) -> Tuple[str, str]:
+    """This method splits out a catalog name from it's namespace"""
+    dataset_split = dataset_name.split(".")
+    namespace = ".".join(dataset_split[:-1])
+    data_set_name = dataset_split[-1]
+    return namespace, data_set_name

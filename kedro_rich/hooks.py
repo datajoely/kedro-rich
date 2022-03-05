@@ -11,7 +11,12 @@ from kedro.pipeline.node import Node
 from rich.progress import BarColumn, Progress, ProgressColumn, Task, TaskID
 from rich.text import Text
 
-from kedro_rich.catalog_utils import filter_datasets_by_pipeline, get_catalog_datasets
+from kedro_rich.catalog_utils import (
+    filter_datasets_by_pipeline,
+    get_catalog_datasets,
+    resolve_pipeline_namespace,
+    split_catalog_namespace_key,
+)
 from kedro_rich.settings import RICH_ENABLED_ENV
 
 
@@ -51,17 +56,15 @@ class RichHooks:
 
             # Init tasks
             pipe_name = run_params.get("pipeline_name") or "__default__"
+            input_cnt = len(self.pipeline_inputs)
+            output_cnt = len(self.pipeline_outputs)
             self.tasks = {
-                "overall": self._add_progress_task(
-                    description=f"Running [bright_magenta]'{pipe_name}'[/] pipeline",
+                "overall": self._add_task(
+                    desc=f"Running [bright_magenta]'{pipe_name}'[/] pipeline",
                     count=self.task_count,
                 ),
-                "loads": self._add_progress_task(
-                    description="Loading datasets", count=len(self.pipeline_inputs)
-                ),
-                "saves": self._add_progress_task(
-                    description="Saving datasets", count=len(self.pipeline_outputs)
-                ),
+                "loads": self._add_task(desc="Loading datasets", count=input_cnt),
+                "saves": self._add_task(desc="Saving datasets", count=output_cnt),
             }
 
             # Start process
@@ -74,7 +77,7 @@ class RichHooks:
         to progress display
         """
         if self.progress:
-            dataset_name_namespaced = dataset_name.replace(".", "__")
+            dataset_name_namespaced = resolve_pipeline_namespace(dataset_name)
             if dataset_name in self.pipeline_inputs:
                 dataset_type = self.io_datasets_in_catalog[dataset_name_namespaced]
                 dataset_desc = (
@@ -88,14 +91,12 @@ class RichHooks:
     def after_dataset_saved(self, dataset_name: str):
         """Add the last dataset persisted to progress display"""
         if self.progress:
-            dataset_name_namespaced = dataset_name.replace(".", "__")
+            dataset_name_namespaced = resolve_pipeline_namespace(dataset_name)
 
             if dataset_name_namespaced in self.pipeline_outputs:
-                dataset_split = dataset_name.split(".")
-                namespace = ".".join(dataset_split[:-1])
-                data = dataset_split[-1]
+                namespace, key = split_catalog_namespace_key(dataset_name)
 
-                data_string = f"[blue]{namespace}[/].{data}" if namespace else f"{data}"
+                data_string = f"[blue]{namespace}[/].{key}" if namespace else f"{key}"
 
                 dataset_type = self.io_datasets_in_catalog[dataset_name_namespaced]
                 dataset_desc = (
@@ -119,7 +120,6 @@ class RichHooks:
         """Increment the task count on node completion"""
         if self.progress:
             self.progress.update(self.tasks["overall"], advance=1)
-            time.sleep(0.3)  # allows the UI to clean up after the process ends
 
     @hook_impl
     def after_pipeline_run(self):
@@ -132,9 +132,10 @@ class RichHooks:
             )
             self.progress.update(self.tasks["saves"], completed=100, visible=False)
             self.progress.update(self.tasks["loads"], completed=100, visible=False)
-            time.sleep(0.1)
+            time.sleep(0.1)  # allows the UI to clean up after the process ends
 
     def _init_progress_tasks(self, pipeline: Pipeline, catalog: DataCatalog):
+        """This method initialises the key Hook constructor attributes """
         self.task_count = len(pipeline.nodes)
         self.io_datasets_in_catalog = get_catalog_datasets(
             catalog=catalog, exclude=("MemoryDataSet",)
@@ -143,8 +144,9 @@ class RichHooks:
             datasets=self.io_datasets_in_catalog, pipeline=pipeline
         )
 
-    def _add_progress_task(self, description, count) -> TaskID:
-        return self.progress.add_task(description, total=count, activity="")
+    def _add_task(self, desc: str, count: int) -> TaskID:
+        """This method adds a task to the progress bar"""
+        return self.progress.add_task(desc, total=count, activity="")
 
 
 class _KedroElapsedColumn(ProgressColumn):
