@@ -2,7 +2,7 @@
 
 ## Make your Kedro snazzy
 
-This is a very very work in progress Kedro plugin that utilises the awesome rich library.
+This is a very early work in progress Kedro plugin that utilises the awesome rich library.
 
 ![terminal output](static/rich-kedro.gif)
 
