@@ -2,8 +2,7 @@
 import os
 import time
 from datetime import timedelta
-from functools import reduce
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict
 
 from kedro.framework.hooks import hook_impl
 from kedro.io import DataCatalog
@@ -12,6 +11,7 @@ from kedro.pipeline.node import Node
 from rich.progress import BarColumn, Progress, ProgressColumn, Task, TaskID
 from rich.text import Text
 
+from kedro_rich.catalog_utils import filter_datasets_by_pipeline, get_catalog_datasets
 from kedro_rich.settings import RICH_ENABLED_ENV
 
 
@@ -35,12 +35,15 @@ class RichHooks:
         if bool(
             os.environ.get(RICH_ENABLED_ENV, False)
         ):  # disable under ParallelRunner
+            progress_desc_format = "[progress.description]{task.description}"
+            progress_percentage_format = "[progress.percentage]{task.percentage:>3.0f}%"
+            progress_activity_format = "{task.fields[activity]}"
             self.progress = Progress(
                 _KedroElapsedColumn(),
-                "[progress.description]{task.description}",
+                progress_desc_format,
                 BarColumn(),
-                "[progress.percentage]{task.percentage:>3.0f}%",
-                "{task.fields[activity]}",
+                progress_percentage_format,
+                progress_activity_format,
             )
 
             # Get pipeline goals
@@ -91,10 +94,8 @@ class RichHooks:
                 dataset_split = dataset_name.split(".")
                 namespace = ".".join(dataset_split[:-1])
                 data = dataset_split[-1]
-                if namespace:
-                    data_string = f"[blue]{namespace}[/].{data}"
-                else:
-                    data_string = f"{data}"
+
+                data_string = f"[blue]{namespace}[/].{data}" if namespace else f"{data}"
 
                 dataset_type = self.io_datasets_in_catalog[dataset_name_namespaced]
                 dataset_desc = (
@@ -118,7 +119,7 @@ class RichHooks:
         """Increment the task count on node completion"""
         if self.progress:
             self.progress.update(self.tasks["overall"], advance=1)
-            time.sleep(0.3)
+            time.sleep(0.3)  # allows the UI to clean up after the process ends
 
     @hook_impl
     def after_pipeline_run(self):
@@ -135,49 +136,12 @@ class RichHooks:
 
     def _init_progress_tasks(self, pipeline: Pipeline, catalog: DataCatalog):
         self.task_count = len(pipeline.nodes)
-        self.io_datasets_in_catalog = self._get_persisted_datasets(catalog)
-        (
-            self.pipeline_inputs,
-            self.pipeline_outputs,
-        ) = self._get_persisted_datasets_in_scope(self.io_datasets_in_catalog, pipeline)
-
-    @staticmethod
-    def _get_persisted_datasets(catalog: DataCatalog) -> Dict[str, str]:
-        """Identify ephemeral datasets"""
-        non_memory_datasets = {
-            k: type(v).__name__
-            for k, v in catalog.datasets.__dict__.items()
-            if type(v).__name__ != "MemoryDataSet"
-        }
-        return non_memory_datasets
-
-    @staticmethod
-    def _get_persisted_datasets_in_scope(
-        non_memory: Dict[str, str], pipe: Pipeline
-    ) -> Tuple[Dict[str, str], Dict[str, str]]:
-        """
-        Retrieve datasets (inputs and outputs) which are either
-        loaded from or written to disk as part of the pipeline in scope.
-
-        This function also ensures namespaces are correctly rationalised.
-        """
-
-        def _clean_names(datasets: List[str], namespace: Optional[str]) -> Set[str]:
-            if namespace:
-                return {x.replace(".", "__") for x in datasets}
-            return set(datasets)
-
-        inputs = reduce(
-            lambda a, x: a | _clean_names(x.inputs, x.namespace), pipe.nodes, set()
+        self.io_datasets_in_catalog = get_catalog_datasets(
+            catalog=catalog, exclude=("MemoryDataSet",)
         )
-        outputs = reduce(
-            lambda a, x: a | _clean_names(x.outputs, x.namespace), pipe.nodes, set()
+        (self.pipeline_inputs, self.pipeline_outputs,) = filter_datasets_by_pipeline(
+            datasets=self.io_datasets_in_catalog, pipeline=pipeline
         )
-
-        persisted_inputs = {k: v for k, v in non_memory.items() if k in inputs}
-        persisted_outputs = {k: v for k, v in non_memory.items() if k in outputs}
-
-        return persisted_inputs, persisted_outputs
 
     def _add_progress_task(self, description, count) -> TaskID:
         return self.progress.add_task(description, total=count, activity="")

@@ -27,12 +27,20 @@ I'm very much looking for help developing/testing this project so if you want to
 
 # Install the plug-in
 
+## (Option 1) Cloning the repository
+
 The plug-in is in very early days so it will be a while before (if) this makes it to pypi
+
 1. Clone the repository
 2. Run `make install` to install this to your environment
 3. Go to any Kedro 0.17.x project and see if it works! (Please let me know if it doesn't).
 
-## Run end to end example:
+## (Option 2) Direct from GitHub
+
+1. Run `pip install git+https://github.com/datajoely/kedro-rich` to install this to your environment.
+2. Go to any Kedro 0.17.x project and see if it works! (Please let me know if it doesn't).
+
+## Run end to end example
 
 Running `make test-project` will...
 
@@ -40,6 +48,7 @@ Running `make test-project` will...
 - Pull the 'spaceflights' `kedro-starter`
 - Install requirements
 - Execute `kedro rrun`
+
 ---------------------
 
 ## Potential future ideas

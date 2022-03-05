@@ -6,6 +6,8 @@ import rich
 import rich.logging
 from kedro.framework.session import KedroSession
 
+from kedro_rich.settings import RICH_LOGGING_HANDLER
+
 
 def apply_rich_logging_handler():
     """
@@ -21,12 +23,7 @@ def apply_rich_logging_handler():
 
         def wrapped(*args, **kwargs):
             logging_config = func(*args, **kwargs)
-            logging_config["handlers"]["console"] = {
-                "class": "rich.logging.RichHandler",
-                "level": "INFO",
-                "markup": False,
-                "log_time_format": "[%X]",
-            }
+            logging_config["handlers"]["console"] = RICH_LOGGING_HANDLER
             return logging_config
 
         return wrapped
