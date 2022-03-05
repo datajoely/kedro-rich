@@ -3,6 +3,7 @@ package:
 	python setup.py sdist bdist_wheel
 
 install: package
+	pip uninstall kedro-rich -y
 	pip install -U dist/*.whl
 
 install-pip-setuptools:
@@ -32,7 +33,7 @@ uninstall-pre-commit:
 	pre-commit uninstall
 	pre-commit uninstall --hook-type pre-push
 
-test-run:
+test-proj:
 	pip uninstall kedro-rich -y
 	make install
 	rm -rf test_project/
@@ -41,6 +42,8 @@ test-run:
 	touch .telemetry
 	echo "consent: false" >> .telemetry
 	mv .telemetry test_project/
+
+test-run:
 	cd test_project; kedro rrun
 
 clear-test-run:

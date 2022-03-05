@@ -6,7 +6,23 @@ from pathlib import Path
 from typing import Iterable, Tuple
 
 import click
+from kedro.framework.cli.project import (
+    ASYNC_ARG_HELP,
+    CONFIG_FILE_HELP,
+    FROM_INPUTS_HELP,
+    FROM_NODES_HELP,
+    LOAD_VERSION_HELP,
+    NODE_ARG_HELP,
+    PARALLEL_ARG_HELP,
+    PARAMS_ARG_HELP,
+    PIPELINE_ARG_HELP,
+    RUNNER_ARG_HELP,
+    TAG_ARG_HELP,
+    TO_NODES_HELP,
+    TO_OUTPUTS_HELP,
+)
 from kedro.framework.cli.utils import (
+    CONTEXT_SETTINGS,
     KedroCliError,
     _config_file_callback,
     _reformat_load_versions,
@@ -15,40 +31,20 @@ from kedro.framework.cli.utils import (
     split_string,
 )
 from kedro.framework.session import KedroSession
+from kedro.framework.startup import ProjectMetadata
 from kedro.utils import load_obj
 
 from kedro_rich.settings import RICH_ENABLED_ENV
 
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
-FROM_INPUTS_HELP = (
-    """A list of dataset names which should be used as a starting point."""
-)
-TO_OUTPUTS_HELP = """A list of dataset names which should be used as an end point."""
-FROM_NODES_HELP = """A list of node names which should be used as a starting point."""
-TO_NODES_HELP = """A list of node names which should be used as an end point."""
-NODE_ARG_HELP = """Run only nodes with specified names."""
-RUNNER_ARG_HELP = """Specify a runner that you want to run the pipeline with.
-Available runners: `SequentialRunner`, `ParallelRunner` and `ThreadRunner`.
-This option cannot be used together with --parallel."""
-PARALLEL_ARG_HELP = """Run the pipeline using the `ParallelRunner`.
-If not specified, use the `SequentialRunner`. This flag cannot be used together
-with --runner."""
-ASYNC_ARG_HELP = """Load and save node inputs and outputs asynchronously
-with threads. If not specified, load and save datasets synchronously."""
-TAG_ARG_HELP = """Construct the pipeline using only nodes which have this tag
-attached. Option can be used multiple times, what results in a
-pipeline constructed from nodes having any of those tags."""
-LOAD_VERSION_HELP = """Specify a particular dataset version (timestamp) for loading."""
-CONFIG_FILE_HELP = """Specify a YAML configuration file to load the run
-command arguments from. If command line arguments are provided, they will
-override the loaded ones."""
-PIPELINE_ARG_HELP = """Name of the modular pipeline to run.
-If not set, the project pipeline is run by default."""
-PARAMS_ARG_HELP = """Specify extra parameters that you want to pass
-to the context initializer. Items must be separated by comma, keys - by colon,
-example: param1:value1,param2:value2. Each parameter is split by the first comma,
-so parameter values are allowed to contain colons, parameter keys are not."""
+def _create_session(package_name: str, **kwargs):
+    kwargs.setdefault("save_on_close", False)
+    try:
+        return KedroSession.create(package_name, **kwargs)
+    except Exception as exc:
+        raise KedroCliError(
+            f"Unable to instantiate Kedro session.\nError: {exc}"
+        ) from exc
 
 
 def _get_values_as_tuple(values: Iterable[str]) -> Tuple[str, ...]:
@@ -100,7 +96,7 @@ def commands():
 @click.option(
     "--params", type=str, default="", help=PARAMS_ARG_HELP, callback=_split_params
 )
-def rrun(
+def run(
     tag,
     env,
     parallel,
@@ -147,3 +143,23 @@ def rrun(
             pipeline_name=pipeline,
         )
     del os.environ[RICH_ENABLED_ENV]
+
+
+# pylint: disable=too-many-locals
+@commands.command()
+@env_option
+@click.option(
+    "--pipeline",
+    type=str,
+    default="",
+    help="Name of the modular pipeline to run. If not set, "
+    "the project pipeline is run by default.",
+    callback=split_string,
+)
+@click.pass_obj
+def list_datasets(metadata: ProjectMetadata, pipeline, env):
+    """Show datasets per type."""
+
+    session = _create_session(metadata.package_name, env=env)
+    context = session.load_context()
+    print(context.catalog.datasets, pipeline)

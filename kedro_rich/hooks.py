@@ -135,7 +135,7 @@ class RichHooks:
             time.sleep(0.1)  # allows the UI to clean up after the process ends
 
     def _init_progress_tasks(self, pipeline: Pipeline, catalog: DataCatalog):
-        """This method initialises the key Hook constructor attributes """
+        """This method initialises the key Hook constructor attributes"""
         self.task_count = len(pipeline.nodes)
         self.io_datasets_in_catalog = get_catalog_datasets(
             catalog=catalog, exclude=("MemoryDataSet",)

@@ -25,9 +25,9 @@ I'm very much looking for help developing/testing this project so if you want to
 - This is actually required to make the progress bars work without being broken onto new lines every time a new log message appears.
 - In order enable this purely plug-in side (i.e. not making the user change `logging.yml`) I've had to do an ugly bit of monkey patching. Keen to come up with a better solution here.
 
-# Install the plug-in
+## Install the plug-in
 
-## (Option 1) Cloning the repository
+### (Option 1) Cloning the repository
 
 The plug-in is in very early days so it will be a while before (if) this makes it to pypi
 
@@ -35,7 +35,7 @@ The plug-in is in very early days so it will be a while before (if) this makes i
 2. Run `make install` to install this to your environment
 3. Go to any Kedro 0.17.x project and see if it works! (Please let me know if it doesn't).
 
-## (Option 2) Direct from GitHub
+### (Option 2) Direct from GitHub
 
 1. Run `pip install git+https://github.com/datajoely/kedro-rich` to install this to your environment.
 2. Go to any Kedro 0.17.x project and see if it works! (Please let me know if it doesn't).
@@ -47,7 +47,7 @@ Running `make test-project` will...
 - Install the `kedro-rich` package into the environment
 - Pull the 'spaceflights' `kedro-starter`
 - Install requirements
-- Execute `kedro rrun`
+- Execute `kedro run`
 
 ---------------------
 
