@@ -12,12 +12,11 @@ I'm very much looking for help developing/testing this project so if you want to
 
 ## Current Functionality
 
-### `kedro rrun` command
+### `kedro run` command
 
 - Does exactly the same as a regular Kedro run but kicks the progress bars into account.
 - The load/save progress tasks focus purely on persisted data and ignore ephemeral `MemoryDataSets`.
 - The progress bars are not enabled since `MultiProcessing` is causing issues between `kedro` and `rich`. Further investigation if some sort of `Lock()` mechanism will allow for this to work.
-- I'm not wedded to the command name, so open to suggestions.
 
 ### Logging via `rich.logging.RichHandler`
 
