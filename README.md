@@ -4,7 +4,7 @@
 
 This is a very early work in progress Kedro plugin that utilises the awesome rich library.
 
-![terminal output](static/rich-kedro.gif)
+![terminal output](static/kedro-run.mp4)
 
 The intention with this piece of work is to battle test the idea, iron out the creases potentially to integrate this as a 1st class plugin hosted at kedro-org/plugins or if we're lucky, native functionality within Kedro itself.
 
@@ -12,7 +12,7 @@ I'm very much looking for help developing/testing this project so if you want to
 
 ## Current Functionality
 
-### `kedro run` command
+### Overridden `kedro run` command
 
 - Does exactly the same as a regular Kedro run but kicks the progress bars into account.
 - The load/save progress tasks focus purely on persisted data and ignore ephemeral `MemoryDataSets`.
@@ -22,7 +22,20 @@ I'm very much looking for help developing/testing this project so if you want to
 
 - This plugin changes the default `stdout` console logging handler in place of the class provided by `rich` .
 - This is actually required to make the progress bars work without being broken onto new lines every time a new log message appears.
+- At this point we also enable the [rich traceback handler](https://rich.readthedocs.io/en/stable/traceback.html).
 - In order enable this purely plug-in side (i.e. not making the user change `logging.yml`) I've had to do an ugly bit of monkey patching. Keen to come up with a better solution here.
+
+### Kedro `list-datasets` commands
+
+This in time could replace the `kedro catalog list` command with something easier to parse both by humans and machines.
+
+The `kedro list-datasets` command will produce a table view of datasets and their associated pipelines:
+
+![list of datasets](static/list-datasets.png)
+
+Adding the `--to-json` flag will print out a JSON view of the catalog that can be visually inspected by humans and machines alike:
+
+![list of datasets](static/list-datasets-json.png)
 
 ## Install the plug-in
 
@@ -31,7 +44,7 @@ I'm very much looking for help developing/testing this project so if you want to
 The plug-in is in very early days so it will be a while before (if) this makes it to pypi
 
 1. Clone the repository
-2. Run `make install` to install this to your environment
+2. Run `make dev-install` to install this to your environment
 3. Go to any Kedro 0.17.x project and see if it works! (Please let me know if it doesn't).
 
 ### (Option 2) Direct from GitHub
@@ -41,7 +54,7 @@ The plug-in is in very early days so it will be a while before (if) this makes i
 
 ## Run end to end example
 
-Running `make test-project` will...
+Running `make test-project` then `make-test-run` will...
 
 - Install the `kedro-rich` package into the environment
 - Pull the 'spaceflights' `kedro-starter`
@@ -51,24 +64,6 @@ Running `make test-project` will...
 ---------------------
 
 ## Potential future ideas
-
-### `kedro catalog list` and `kedro registry list`
-
-- The current catalog functionality prints out a long list of DataSets grouped by pipeline and DataSet type
-
-    ```text
-
-    DataSets in '__default__' pipeline:
-    Datasets mentioned in pipeline:
-        CSVDataSet:
-        - reviews
-        - companies
-        DefaultDataSet:
-        - data_science.candidate_modelling_pipeline.regressor
-        ...
-    ```
-
-- I'm certain there is a better, rich powered implementation of this!
 
 ### `kedro jupyter` and  `kedro ipython`
 

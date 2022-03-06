@@ -34,6 +34,7 @@ from kedro.framework.cli.utils import (
 )
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import ProjectMetadata
+from kedro.pipeline import Pipeline
 from kedro.utils import load_obj
 from rich import box
 from rich.style import Style
@@ -175,8 +176,8 @@ def list_datasets(metadata: ProjectMetadata, to_json: bool, env: str):
     from rich.console import Console  # pylint: disable=import-outside-toplevel
 
     # is this the 0.18.x version of doing this?
-    registry_py = importlib.import_module(metadata.package_name + ".pipeline_registry")
-    pipelines = registry_py.register_pipelines()
+
+    pipelines = _get_pipeline_registry(metadata)
     session = _create_session(metadata.package_name, env=env)
     context = session.load_context()
     catalog_datasets = get_catalog_datasets(catalog=context.catalog, drop_params=True)
@@ -186,7 +187,7 @@ def list_datasets(metadata: ProjectMetadata, to_json: bool, env: str):
     cons = Console()
 
     if to_json:
-        cons.print_json(json.dumps(mapped_datasets))
+        cons.print_json(json.dumps(mapped_datasets),)
     else:
 
         pipeline_names = sorted(pipelines.keys())
@@ -227,7 +228,7 @@ def list_datasets(metadata: ProjectMetadata, to_json: bool, env: str):
 
 
 def get_dataset_summary(
-    pipeline_datasets: Dict[List, str], catalog_datasets: List[Dict, str]
+    pipeline_datasets: Dict[str, List[str]], catalog_datasets: Dict[str, str]
 ) -> List[Dict[str, Any]]:
     """This method accepts the datasets present in the pipeline registry
     as well as the full data catalog and produces a list of records
@@ -251,3 +252,14 @@ def get_dataset_summary(
         ),
         key=lambda x: x["dataset_type"],
     )
+
+
+def _get_pipeline_registry(proj_metadata: ProjectMetadata) -> Dict[str, Pipeline]:
+    """
+    This method retrieves the pipelines registered in the project where
+    the plugin in installed
+    """
+    registry = importlib.import_module(
+        f"{proj_metadata.package_name}.pipeline_registry"
+    )
+    return registry.register_pipelines()
