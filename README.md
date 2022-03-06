@@ -4,7 +4,7 @@
 
 This is a very early work in progress Kedro plugin that utilises the awesome rich library.
 
-![terminal output](static/kedro-run.mp4)
+
 
 The intention with this piece of work is to battle test the idea, iron out the creases potentially to integrate this as a 1st class plugin hosted at kedro-org/plugins or if we're lucky, native functionality within Kedro itself.
 
@@ -17,6 +17,10 @@ I'm very much looking for help developing/testing this project so if you want to
 - Does exactly the same as a regular Kedro run but kicks the progress bars into account.
 - The load/save progress tasks focus purely on persisted data and ignore ephemeral `MemoryDataSets`.
 - The progress bars are not enabled since `MultiProcessing` is causing issues between `kedro` and `rich`. Further investigation if some sort of `Lock()` mechanism will allow for this to work.
+
+
+https://user-images.githubusercontent.com/35801847/156947069-2840ecb0-684a-4e88-be7a-388a72f5da21.mp4
+
 
 ### Logging via `rich.logging.RichHandler`
 
