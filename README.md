@@ -68,8 +68,7 @@ Running `make test-project` then `make-test-run` will...
 
 ### `kedro jupyter` and  `kedro ipython`
 
-- We could change the current init process that as well as making the `catalog`, `session` and other objects available to the user we could also overload the `print` statement.
-- That way the user gets [pretty notebooks](https://www.willmcgugan.com/blog/tech/post/rich-adds-support-for-jupyter-notebooks/) for free!]
+- We could change the current init process that as well as making the `catalog`, `session` and other objects available to the user we could also overload the `print` statement. That way the user gets [pretty notebooks](https://www.willmcgugan.com/blog/tech/post/rich-adds-support-for-jupyter-notebooks/) for free!
 
     ```python
     from rich.jupyter import print
