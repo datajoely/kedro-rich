@@ -34,7 +34,7 @@ from kedro.framework.session import KedroSession
 from kedro.framework.startup import ProjectMetadata
 from kedro.utils import load_obj
 
-from kedro_rich.settings import RICH_ENABLED_ENV
+from kedro_rich.settings import KEDRO_RICH_ENABLED
 
 
 def _create_session(package_name: str, **kwargs):
@@ -120,10 +120,10 @@ def run(
         )
     runner = runner or "SequentialRunner"
     if parallel:
-        os.environ[RICH_ENABLED_ENV] = "False"
+        os.environ[KEDRO_RICH_ENABLED] = "False"
         runner = "ParallelRunner"
     else:
-        os.environ[RICH_ENABLED_ENV] = "True"
+        os.environ[KEDRO_RICH_ENABLED] = "True"
 
     runner_class = load_obj(runner, "kedro.runner")
 
@@ -142,7 +142,7 @@ def run(
             load_versions=load_version,
             pipeline_name=pipeline,
         )
-    del os.environ[RICH_ENABLED_ENV]
+    del os.environ[KEDRO_RICH_ENABLED]
 
 
 # pylint: disable=too-many-locals

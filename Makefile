@@ -6,6 +6,9 @@ install: package
 	pip uninstall kedro-rich -y
 	pip install -U dist/*.whl
 
+dev-install:
+	pip install -e .
+
 install-pip-setuptools:
 	python -m pip install -U pip setuptools wheel
 

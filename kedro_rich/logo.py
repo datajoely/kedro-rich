@@ -10,7 +10,7 @@ def print_kedro_logo() -> None:
     """
     text = f"""
 [orange1][b]         -         [/b][/orange1]
-[orange1][b]       ·===·       [/b][/orange1]  [orange1][b]KEDRO[/b][/orange1] ({kedro.__version__})  [violet]
+[orange1][b]       ·===·       [/b][/orange1]  [orange1][b]KEDRO[/b][/orange1] ({kedro.__version__})
 [orange1][b]    ·==:   :==·    [/b][/orange1]  [gray][i]Reproducible, maintainable and modular data science code[/i][/gray]
 [orange1][b]  ·==:       :==·  [/b][/orange1]
 [orange1][b]    ·==:   :==·    [/b][/orange1]  https://github.com/kedro-org/kedro

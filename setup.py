@@ -34,8 +34,8 @@ setup(
     include_package_data=True,
     zip_safe=False,
     entry_points={
-        "kedro.project_commands": ["kedro_rich_command = kedro_rich.cli:commands"],
-        "kedro.hooks" : ["kedro_rich_progress = kedro_rich.hooks:rich_hooks"],
-        "kedro.init" : ["kedro_rich_logging = kedro_rich.logging:rich_logging"]
+        "kedro.project_commands": ["kedro_rich_command = kedro_rich.rich_cli:commands"],
+        "kedro.hooks" : ["kedro_rich_progress = kedro_rich.rich_progress_hooks:rich_hooks"],
+        "kedro.init" : ["kedro_rich_logging = kedro_rich.rich_logging:rich_logging"]
     },
 )
