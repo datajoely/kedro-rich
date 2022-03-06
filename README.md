@@ -4,8 +4,6 @@
 
 This is a very early work in progress Kedro plugin that utilises the awesome rich library.
 
-
-
 The intention with this piece of work is to battle test the idea, iron out the creases potentially to integrate this as a 1st class plugin hosted at kedro-org/plugins or if we're lucky, native functionality within Kedro itself.
 
 I'm very much looking for help developing/testing this project so if you want to get involved please get in touch.
@@ -17,13 +15,9 @@ I'm very much looking for help developing/testing this project so if you want to
 - Does exactly the same as a regular Kedro run but kicks the progress bars into account.
 - The load/save progress tasks focus purely on persisted data and ignore ephemeral `MemoryDataSets`.
 
-https://user-images.githubusercontent.com/35801847/156947226-4d63663f-bdd4-4e36-af7c-af2eed34e2b1.mp4
+<https://user-images.githubusercontent.com/35801847/156947226-4d63663f-bdd4-4e36-af7c-af2eed34e2b1.mp4>
 
 - The progress bars are currently disabuled when using `ParallelRunner` since `MultiProcessing` is causing issues between `kedro` and `rich`. Further investigation if some sort of `Lock()` mechanism will allow for this to work.
-
-
-
-
 
 ### Logging via `rich.logging.RichHandler`
 
@@ -34,7 +28,7 @@ https://user-images.githubusercontent.com/35801847/156947226-4d63663f-bdd4-4e36-
 
 ### Kedro `list-datasets` commands
 
-This in time could replace the `kedro catalog list` command with something easier to parse both by humans and machines.
+In time, this could replace the `kedro catalog list` command with something easier to parse both by humans and machines.
 
 The `kedro list-datasets` command will produce a table view of datasets and their associated pipelines:
 
