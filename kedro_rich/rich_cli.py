@@ -1,9 +1,11 @@
 """Command line tools for manipulating a Kedro project.
 Intended to be invoked via `kedro`."""
+import importlib
+import json
 import os
 from itertools import chain
 from pathlib import Path
-from typing import Iterable, Tuple
+from typing import Any, Dict, Iterable, List, Tuple
 
 import click
 from kedro.framework.cli.project import (
@@ -33,7 +35,16 @@ from kedro.framework.cli.utils import (
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import ProjectMetadata
 from kedro.utils import load_obj
+from rich import box
+from rich.style import Style
+from rich.table import Table
 
+from kedro_rich.catalog_utils import (
+    get_catalog_datasets,
+    get_datasets_by_pipeline,
+    resolve_catalog_namespace,
+    split_catalog_namespace_key,
+)
 from kedro_rich.settings import KEDRO_RICH_ENABLED
 
 
@@ -149,17 +160,94 @@ def run(
 @commands.command()
 @env_option
 @click.option(
-    "--pipeline",
-    type=str,
-    default="",
-    help="Name of the modular pipeline to run. If not set, "
-    "the project pipeline is run by default.",
-    callback=split_string,
+    "--to-json",
+    type=bool,
+    default=False,
+    help="Output the results as JSON",
+    is_flag=True,
 )
 @click.pass_obj
-def list_datasets(metadata: ProjectMetadata, pipeline, env):
-    """Show datasets per type."""
+def list_datasets(metadata: ProjectMetadata, to_json: bool, env: str):
+    """This method provides mechanisms to print out the contents of the
+    data catalog in a human readable view"""
 
+    # Needed to avoid circular reference
+    from rich.console import Console  # pylint: disable=import-outside-toplevel
+
+    # is this the 0.18.x version of doing this?
+    registry_py = importlib.import_module(metadata.package_name + ".pipeline_registry")
+    pipelines = registry_py.register_pipelines()
     session = _create_session(metadata.package_name, env=env)
     context = session.load_context()
-    print(context.catalog.datasets, pipeline)
+    catalog_datasets = get_catalog_datasets(catalog=context.catalog, drop_params=True)
+    pipeline_datasets = get_datasets_by_pipeline(context.catalog, pipelines)
+    mapped_datasets = get_dataset_summary(pipeline_datasets, catalog_datasets)
+
+    cons = Console()
+
+    if to_json:
+        cons.print_json(json.dumps(mapped_datasets))
+    else:
+
+        pipeline_names = sorted(pipelines.keys())
+        table = Table(
+            show_header=True, header_style=Style(color="white"), box=box.ROUNDED
+        )
+        table.add_column("namespace")
+        table.add_column("dataset_name")
+        table.add_column("dataset_type")
+        for pipeline_name in pipeline_names:
+            table.add_column(pipeline_name, justify="center", footer="hello")
+
+        for index, row in enumerate(mapped_datasets):
+            ds_type = row["dataset_type"]
+
+            same_section = (
+                index + 1 < len(mapped_datasets)
+                and mapped_datasets[index + 1]["dataset_type"] == ds_type
+            )
+
+            new_section = (
+                index == 0 or mapped_datasets[index - 1]["dataset_type"] != ds_type
+            )
+
+            pipeline_mapping = [
+                "[bold green]✓[/]" if x in row["pipelines"] else "[bold red]✘[/]"
+                for x in pipeline_names
+            ]
+
+            table.add_row(
+                row["namespace"] if row["namespace"] else "[grey50]n/a[/]",
+                row["key"],
+                "[magenta][b]" + ds_type + "[/][/]" if new_section else "",
+                *pipeline_mapping,
+                end_section=not same_section,
+            )
+        cons.print(table)
+
+
+def get_dataset_summary(
+    pipeline_datasets: Dict[List, str], catalog_datasets: List[Dict, str]
+) -> List[Dict[str, Any]]:
+    """This method accepts the datasets present in the pipeline registry
+    as well as the full data catalog and produces a list of records
+    which include key metadata such as the type, namespace, linked pipelines
+    and dataset name (ordered by type)
+    """
+    return sorted(
+        (
+            {
+                **{"dataset_type": v, "pipelines": pipeline_datasets.get(k, []),},
+                **dict(
+                    zip(
+                        ("namespace", "key"),
+                        split_catalog_namespace_key(
+                            dataset_name=resolve_catalog_namespace(k)
+                        ),
+                    )
+                ),
+            }
+            for k, v in catalog_datasets.items()
+        ),
+        key=lambda x: x["dataset_type"],
+    )
