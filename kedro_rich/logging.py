@@ -1,4 +1,5 @@
 """This module ensures that the rich logging and exceptions handlers are used"""
+import logging
 from typing import Callable
 
 import click
@@ -40,6 +41,8 @@ def apply_rich_logging_handler():
     # The suppress=[click] command means that exceptions will not
     # show the frames related to
     rich.traceback.install(show_locals=False, suppress=[click])
+
+    logging.captureWarnings(True)
 
 
 rich_logging = apply_rich_logging_handler

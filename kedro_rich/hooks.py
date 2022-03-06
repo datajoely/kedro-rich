@@ -9,7 +9,14 @@ from kedro.framework.hooks import hook_impl
 from kedro.io import DataCatalog
 from kedro.pipeline import Pipeline
 from kedro.pipeline.node import Node
-from rich.progress import BarColumn, Progress, ProgressColumn, Task, TaskID
+from rich.progress import (
+    BarColumn,
+    Progress,
+    ProgressColumn,
+    SpinnerColumn,
+    Task,
+    TaskID,
+)
 from rich.text import Text
 
 from kedro_rich.catalog_utils import (
@@ -47,6 +54,7 @@ class RichHooks:
             self.progress = Progress(
                 _KedroElapsedColumn(),
                 progress_desc_format,
+                SpinnerColumn(),
                 BarColumn(),
                 progress_percentage_format,
                 progress_activity_format,
@@ -75,7 +83,7 @@ class RichHooks:
             logger.warning("Rich progress bars are incompatible with ParallelRunner")
 
     @hook_impl
-    def after_dataset_loaded(self, dataset_name: str):
+    def before_dataset_loaded(self, dataset_name: str):
         """
         Add the last dataset loaded (from persistent storage)
         to progress display
