@@ -22,6 +22,7 @@ clean:
 	rm -rf build dist pip-wheel-metadata .pytest_cache
 	find . -regex ".*/__pycache__" -exec rm -rf {} +
 	find . -regex ".*\.egg-info" -exec rm -rf {} +
+	rm -rf test_project/
 
 install-test-requirements:
 	pip install -r test_requirements.txt
@@ -34,7 +35,7 @@ uninstall-pre-commit:
 	pre-commit uninstall --hook-type pre-push
 
 test-proj:
-	pip uninstall kedro-rich -y
+	pip install . -e
 	make install
 	rm -rf test_project/
 	yes test_project | kedro new --starter=spaceflights

@@ -25,6 +25,7 @@ from kedro_rich.catalog_utils import (
     resolve_pipeline_namespace,
     split_catalog_namespace_key,
 )
+from kedro_rich.logo import print_kedro_logo
 from kedro_rich.settings import RICH_ENABLED_ENV
 
 
@@ -75,6 +76,8 @@ class RichHooks:
                 "loads": self._add_task(desc="Loading datasets", count=input_cnt),
                 "saves": self._add_task(desc="Saving datasets", count=output_cnt),
             }
+
+            print_kedro_logo()
 
             # Start process
             self.progress.start()
