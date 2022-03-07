@@ -177,7 +177,7 @@ def list_datasets(metadata: ProjectMetadata, to_json: bool, env: str):
     pipelines = _get_pipeline_registry(metadata)
     session = _create_session(metadata.package_name, env=env)
     context = session.load_context()
-    catalog_datasets = get_catalog_datasets(catalog=context.catalog, drop_params=True)
+    catalog_datasets = get_catalog_datasets(context.catalog, drop_params=True)
     pipeline_datasets = get_datasets_by_pipeline(context.catalog, pipelines)
     mapped_datasets = summarise_datasets_as_list(pipeline_datasets, catalog_datasets)
 
