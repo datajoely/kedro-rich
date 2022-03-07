@@ -176,7 +176,6 @@ def list_datasets(metadata: ProjectMetadata, to_json: bool, env: str):
     from rich.console import Console  # pylint: disable=import-outside-toplevel
 
     # is this the 0.18.x version of doing this?
-
     pipelines = _get_pipeline_registry(metadata)
     session = _create_session(metadata.package_name, env=env)
     context = session.load_context()
@@ -197,8 +196,15 @@ def list_datasets(metadata: ProjectMetadata, to_json: bool, env: str):
         table.add_column("namespace")
         table.add_column("dataset_name")
         table.add_column("dataset_type")
-        for pipeline_name in pipeline_names:
-            table.add_column(pipeline_name, justify="center", footer="hello")
+
+        pipeline_threshold = 10
+
+        if len(pipeline_names) <= pipeline_threshold:
+            for pipeline_name in pipeline_names:
+                table.add_column(pipeline_name, justify="center")
+
+        else:
+            table.add_column("pipeline_count")
 
         for index, row in enumerate(mapped_datasets):
             ds_type = row["dataset_type"]
@@ -212,16 +218,20 @@ def list_datasets(metadata: ProjectMetadata, to_json: bool, env: str):
                 index == 0 or mapped_datasets[index - 1]["dataset_type"] != ds_type
             )
 
-            pipeline_mapping = [
-                "[bold green]✓[/]" if x in row["pipelines"] else "[bold red]✘[/]"
-                for x in pipeline_names
-            ]
+            pipeline_map = (
+                [
+                    "[bold green]✓[/]" if x in row["pipelines"] else "[bold red]✘[/]"
+                    for x in pipeline_names
+                ]
+                if len(pipeline_names) <= pipeline_threshold
+                else [str(len(row["pipelines"]))]
+            )
 
             table.add_row(
                 row["namespace"] if row["namespace"] else "[grey50]n/a[/]",
                 row["key"],
                 "[magenta][b]" + ds_type + "[/][/]" if new_section else "",
-                *pipeline_mapping,
+                *pipeline_map,
                 end_section=not same_section,
             )
         console.print(table)
