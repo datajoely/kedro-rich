@@ -184,10 +184,10 @@ def list_datasets(metadata: ProjectMetadata, to_json: bool, env: str):
     pipeline_datasets = get_datasets_by_pipeline(context.catalog, pipelines)
     mapped_datasets = get_dataset_summary(pipeline_datasets, catalog_datasets)
 
-    cons = Console()
+    console = Console()
 
     if to_json:
-        cons.print_json(json.dumps(mapped_datasets),)
+        console.print_json(json.dumps(mapped_datasets),)
     else:
 
         pipeline_names = sorted(pipelines.keys())
@@ -224,7 +224,7 @@ def list_datasets(metadata: ProjectMetadata, to_json: bool, env: str):
                 *pipeline_mapping,
                 end_section=not same_section,
             )
-        cons.print(table)
+        console.print(table)
 
 
 def get_dataset_summary(

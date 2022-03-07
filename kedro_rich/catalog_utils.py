@@ -116,7 +116,7 @@ def resolve_pipeline_namespace(dataset_name: str) -> str:
 
 
 def resolve_catalog_namespace(dataset_name: str) -> str:
-    """ Resolves the double underscore to dot namespace
+    """Resolves the double underscore to dot namespace
     discrepancy between catalog keys and pipeline inputs/outputs
     """
     return dataset_name.replace("__", ".")
