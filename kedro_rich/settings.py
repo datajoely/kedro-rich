@@ -8,3 +8,5 @@ RICH_LOGGING_HANDLER = {
     "markup": False,
     "log_time_format": "[%X]",
 }
+
+PIPELINES_SHOW_EXPANDED = 10

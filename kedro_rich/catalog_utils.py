@@ -2,7 +2,7 @@
 import operator
 from functools import reduce
 from itertools import groupby
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from kedro.io import DataCatalog
 from kedro.pipeline import Pipeline
@@ -130,3 +130,30 @@ def split_catalog_namespace_key(dataset_name: str) -> Tuple[Optional[str], str]:
         dataset_name = dataset_split[-1]
         return namespace, dataset_name
     return None, dataset_name
+
+
+def summarise_datasets_as_list(
+    pipeline_datasets: Dict[str, List[str]], catalog_datasets: Dict[str, str]
+) -> List[Dict[str, Any]]:
+    """This method accepts the datasets present in the pipeline registry
+    as well as the full data catalog and produces a list of records
+    which include key metadata such as the type, namespace, linked pipelines
+    and dataset name (ordered by type)
+    """
+    return sorted(
+        (
+            {
+                **{"dataset_type": v, "pipelines": pipeline_datasets.get(k, []),},
+                **dict(
+                    zip(
+                        ("namespace", "key"),
+                        split_catalog_namespace_key(
+                            dataset_name=resolve_catalog_namespace(k)
+                        ),
+                    )
+                ),
+            }
+            for k, v in catalog_datasets.items()
+        ),
+        key=lambda x: x["dataset_type"],
+    )

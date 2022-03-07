@@ -43,10 +43,9 @@ from rich.table import Table
 from kedro_rich.catalog_utils import (
     get_catalog_datasets,
     get_datasets_by_pipeline,
-    resolve_catalog_namespace,
-    split_catalog_namespace_key,
+    summarise_datasets_as_list,
 )
-from kedro_rich.settings import KEDRO_RICH_ENABLED
+from kedro_rich.settings import KEDRO_RICH_ENABLED, PIPELINES_SHOW_EXPANDED
 
 
 def _create_session(package_name: str, **kwargs):
@@ -175,93 +174,119 @@ def list_datasets(metadata: ProjectMetadata, to_json: bool, env: str):
     # Needed to avoid circular reference
     from rich.console import Console  # pylint: disable=import-outside-toplevel
 
-    # is this the 0.18.x version of doing this?
     pipelines = _get_pipeline_registry(metadata)
     session = _create_session(metadata.package_name, env=env)
     context = session.load_context()
     catalog_datasets = get_catalog_datasets(catalog=context.catalog, drop_params=True)
     pipeline_datasets = get_datasets_by_pipeline(context.catalog, pipelines)
-    mapped_datasets = get_dataset_summary(pipeline_datasets, catalog_datasets)
+    mapped_datasets = summarise_datasets_as_list(pipeline_datasets, catalog_datasets)
 
     console = Console()
 
     if to_json:
-        console.print_json(json.dumps(mapped_datasets),)
+        console.print_json(json.dumps(mapped_datasets))
     else:
-
-        pipeline_names = sorted(pipelines.keys())
-        table = Table(
-            show_header=True, header_style=Style(color="white"), box=box.ROUNDED
-        )
-        table.add_column("namespace")
-        table.add_column("dataset_name")
-        table.add_column("dataset_type")
-
-        pipeline_threshold = 10
-
-        if len(pipeline_names) <= pipeline_threshold:
-            for pipeline_name in pipeline_names:
-                table.add_column(pipeline_name, justify="center")
-
-        else:
-            table.add_column("pipeline_count")
-
-        for index, row in enumerate(mapped_datasets):
-            ds_type = row["dataset_type"]
-
-            same_section = (
-                index + 1 < len(mapped_datasets)
-                and mapped_datasets[index + 1]["dataset_type"] == ds_type
-            )
-
-            new_section = (
-                index == 0 or mapped_datasets[index - 1]["dataset_type"] != ds_type
-            )
-
-            pipeline_map = (
-                [
-                    "[bold green]✓[/]" if x in row["pipelines"] else "[bold red]✘[/]"
-                    for x in pipeline_names
-                ]
-                if len(pipeline_names) <= pipeline_threshold
-                else [str(len(row["pipelines"]))]
-            )
-
-            table.add_row(
-                row["namespace"] if row["namespace"] else "[grey50]n/a[/]",
-                row["key"],
-                "[magenta][b]" + ds_type + "[/][/]" if new_section else "",
-                *pipeline_map,
-                end_section=not same_section,
-            )
+        table = _prepare_rich_table(records=mapped_datasets, pipes=pipelines)
         console.print(table)
 
 
-def get_dataset_summary(
-    pipeline_datasets: Dict[str, List[str]], catalog_datasets: Dict[str, str]
-) -> List[Dict[str, Any]]:
-    """This method accepts the datasets present in the pipeline registry
-    as well as the full data catalog and produces a list of records
-    which include key metadata such as the type, namespace, linked pipelines
-    and dataset name (ordered by type)
+def _prepare_rich_table(
+    records: List[Dict[str, Any]], pipes: Dict[str, Pipeline]
+) -> Table:
+    """This method will build a rich.Table object based on the
+    a given list of records and a dictionary of registered pipelines
+
+    Args:
+        records (List[Dict[str, Any]]): The catalog records
+        pipes (Dict[str, Pipeline]): The pipelines to map to linked datasets
+
+    Returns:
+        Table: The table to render
     """
-    return sorted(
-        (
-            {
-                **{"dataset_type": v, "pipelines": pipeline_datasets.get(k, []),},
-                **dict(
-                    zip(
-                        ("namespace", "key"),
-                        split_catalog_namespace_key(
-                            dataset_name=resolve_catalog_namespace(k)
-                        ),
-                    )
-                ),
-            }
-            for k, v in catalog_datasets.items()
-        ),
-        key=lambda x: x["dataset_type"],
-    )
+
+    table = Table(show_header=True, header_style=Style(color="white"), box=box.ROUNDED)
+
+    # only include namespace if at least one present in catalog
+    includes_namespaces = any(x["namespace"] for x in records)
+    collapse_pipes = len(pipes.keys()) <= PIPELINES_SHOW_EXPANDED
+
+    # define table headers
+    namespace_columns = ["namespace"] if includes_namespaces else []
+    pipe_columns = ["pipeline_count"] if collapse_pipes else list(pipes.keys())
+    columns_to_add = namespace_columns + ["dataset_name", "dataset_type"] + pipe_columns
+
+    # add table headers
+    for column in columns_to_add:
+        table.add_column(column, justify="center")
+
+    # add table rows
+    for index, row in enumerate(records):
+
+        # work out if the dataset_type is the same / different to next row
+        same_section, new_section = _describe_boundary(
+            index=index,
+            records=records,
+            key="dataset_type",
+            current_value=row["dataset_type"],
+        )
+
+        # add namespace if present
+        if includes_namespaces:
+            table_namespace = (
+                [row["namespace"]] if row["namespace"] else ["[bright_black]n/a[/]"]
+            )
+        else:
+            table_namespace = []
+
+        # get catalog key
+        table_dataset_name = [row["key"]]
+
+        # get dataset_type, only show if different from the last record
+        table_dataset_type = (
+            [f"[magenta][b]{row['dataset_type']}[/][/]"] if new_section else [""]
+        )
+
+        # get pipelines attached to this dataset
+        dataset_pipes = row["pipelines"]
+        # get pipelines registered in this project
+        proj_pipes = sorted(pipes.keys())
+
+        # if too many pipelines registered, simply show the count
+        if collapse_pipes:
+            table_pipes = [str(len(dataset_pipes))]
+        else:
+            # show ✓ and ✘ if present
+            table_pipes = [
+                _check_cross(pipe in (set(proj_pipes) & set(dataset_pipes)))
+                for pipe in proj_pipes
+            ]
+
+        # build full row
+        renderables = (
+            table_namespace + table_dataset_name + table_dataset_type + table_pipes
+        )
+
+        # add row to table
+        table.add_row(*renderables, end_section=not same_section)
+    return table
+
+
+def _describe_boundary(
+    index: int, records: List[Dict[str, Any]], key: str, current_value: str
+) -> Tuple[bool, bool]:
+    """
+    Give a list of dictionaries, key and current value this method will
+    return two booleans detailing if the sequence has changed or not
+    """
+    same_section = index + 1 < len(records) and records[index + 1][key] == current_value
+    new_section = index == 0 or records[index - 1][key] != current_value
+
+    return same_section, new_section
+
+
+def _check_cross(overlap: bool) -> str:
+    """Retrun check or cross mapped to True or False """
+    return "[bold green]✓[/]" if overlap else "[bold red]✘[/]"
 
 
 def _get_pipeline_registry(proj_metadata: ProjectMetadata) -> Dict[str, Pipeline]:
@@ -269,6 +294,8 @@ def _get_pipeline_registry(proj_metadata: ProjectMetadata) -> Dict[str, Pipeline
     This method retrieves the pipelines registered in the project where
     the plugin in installed
     """
+    # is this the right 0.18.x version of doing this?
+    # The object is no longer in the context
     registry = importlib.import_module(
         f"{proj_metadata.package_name}.pipeline_registry"
     )
