@@ -45,4 +45,4 @@ def apply_rich_logging_handler():
     logging.captureWarnings(True)
 
 
-rich_logging = apply_rich_logging_handler
+rich_init = apply_rich_logging_handler

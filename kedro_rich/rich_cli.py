@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Tuple
 
 import click
+import rich_click
 from kedro.framework.cli.project import (
     ASYNC_ARG_HELP,
     CONFIG_FILE_HELP,
@@ -67,7 +68,7 @@ def commands():
     """Command line tools for manipulating a Kedro project."""
 
 
-@commands.command()
+@commands.command(cls=rich_click.RichCommand)
 @click.option(
     "--from-inputs", type=str, default="", help=FROM_INPUTS_HELP, callback=split_string
 )
@@ -157,7 +158,7 @@ def run(
 
 
 # pylint: disable=too-many-locals
-@commands.command()
+@commands.command(cls=rich_click.RichCommand)
 @env_option
 @click.option(
     "--to-json",
@@ -285,7 +286,7 @@ def _describe_boundary(
 
 
 def _check_cross(overlap: bool) -> str:
-    """Retrun check or cross mapped to True or False """
+    """Retrun check or cross mapped to True or False"""
     return "[bold green]✓[/]" if overlap else "[bold red]✘[/]"
 
 
