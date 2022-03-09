@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 import click
 import rich_click
+from kedro.framework.cli.catalog import create_catalog
 from kedro.framework.cli.project import (
     ASYNC_ARG_HELP,
     CONFIG_FILE_HELP,
@@ -38,6 +39,7 @@ from kedro.framework.startup import ProjectMetadata
 from kedro.pipeline import Pipeline
 from kedro.utils import load_obj
 from rich import box
+from rich.panel import Panel
 from rich.style import Style
 from rich.table import Table
 
@@ -157,8 +159,17 @@ def run(
     del os.environ[KEDRO_RICH_ENABLED]
 
 
+@commands.group()
+def catalog():
+    """Commands for working with catalog."""
+    pass
+
+
+catalog.add_command(create_catalog)
+
+
 # pylint: disable=too-many-locals
-@commands.command(cls=rich_click.RichCommand)
+@catalog.command(cls=rich_click.RichCommand, name="list")
 @env_option
 @click.option(
     "--to-json",
@@ -169,8 +180,7 @@ def run(
 )
 @click.pass_obj
 def list_datasets(metadata: ProjectMetadata, to_json: bool, env: str):
-    """This method provides mechanisms to print out the contents of the
-    data catalog in a human readable view"""
+    """Detail datasets by type."""
 
     # Needed to avoid circular reference
     from rich.console import Console  # pylint: disable=import-outside-toplevel
@@ -181,14 +191,21 @@ def list_datasets(metadata: ProjectMetadata, to_json: bool, env: str):
     catalog_datasets = get_catalog_datasets(context.catalog, drop_params=True)
     pipeline_datasets = get_datasets_by_pipeline(context.catalog, pipelines)
     mapped_datasets = summarise_datasets_as_list(pipeline_datasets, catalog_datasets)
-
     console = Console()
-
     if to_json:
         console.print_json(json.dumps(mapped_datasets))
     else:
         table = _prepare_rich_table(records=mapped_datasets, pipes=pipelines)
-        console.print(table)
+        console.print(
+            "\n",
+            Panel(
+                table,
+                expand=False,
+                title=f"Catalog contains [b][cyan]{len(mapped_datasets)}[/][/] persisted datasets",
+                padding=(1, 1),
+                box=box.MINIMAL,
+            ),
+        )
 
 
 def _prepare_rich_table(
@@ -206,7 +223,6 @@ def _prepare_rich_table(
     """
 
     table = Table(show_header=True, header_style=Style(color="white"), box=box.ROUNDED)
-
     # only include namespace if at least one present in catalog
     includes_namespaces = any(x["namespace"] for x in records)
     collapse_pipes = len(pipes.keys()) > PIPELINES_SHOW_EXPANDED
