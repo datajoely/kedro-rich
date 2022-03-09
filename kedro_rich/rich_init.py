@@ -19,7 +19,10 @@ def apply_rich_logging_handler():
     (2) It enables the rich.Traceback handler so that exceptions are prettier
     """
 
-    def replace_console_handler(func: Callable) -> Callable:
+    # ensure warnings are caught by logger not stout
+    logging.captureWarnings(True)
+
+    def _replace_console_handler(func: Callable) -> Callable:
         """This function mutates the dictionary returned by reading logging.yml"""
 
         def wrapped(*args, **kwargs):
@@ -34,15 +37,26 @@ def apply_rich_logging_handler():
     # mutate the result of the function call
 
     # pylint: disable=protected-access
-    KedroSession._get_logging_config = replace_console_handler(
+    KedroSession._get_logging_config = _replace_console_handler(
         KedroSession._get_logging_config
     )
 
-    # The suppress=[click] command means that exceptions will not
-    # show the frames related to
+
+def apply_rich_tracebacks():
+    """
+    This method ensures that tracebacks raised by the Kedro project
+    go through the rich traceback method
+
+    The `suppress=[click]` argument means that exceptions will not
+    show the frames related to the CLI framework and only the actual
+    logic the user defines.
+    """
     rich.traceback.install(show_locals=False, suppress=[click])
 
-    logging.captureWarnings(True)
 
-
-rich_init = apply_rich_logging_handler
+def start_up():
+    """This method runs the setup methods needed to override
+    certain defaults at start up
+    """
+    apply_rich_logging_handler()
+    apply_rich_tracebacks()

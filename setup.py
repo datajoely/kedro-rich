@@ -36,6 +36,6 @@ setup(
     entry_points={
         "kedro.project_commands": ["kedro_rich_command = kedro_rich.rich_cli:commands"],
         "kedro.hooks" : ["kedro_rich_progress = kedro_rich.rich_progress_hooks:rich_hooks"],
-        "kedro.init" : ["kedro_rich_init = kedro_rich.rich_init:rich_init"]
+        "kedro.init" : ["kedro_rich_init = kedro_rich.rich_init:start_up"]
     },
 )
