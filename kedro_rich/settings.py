@@ -1,12 +1,13 @@
 """Simple module for maintaining configuration"""
 
 KEDRO_RICH_ENABLED = "KEDRO_RICH_ENABLED"
+KEDRO_RICH_SHOW_DATASET_PROGRESS = True
 
-RICH_LOGGING_HANDLER = {
+KEDRO_RICH_LOGGING_HANDLER = {
     "class": "rich.logging.RichHandler",
     "level": "INFO",
     "markup": False,
     "log_time_format": "[%X]",
 }
 
-PIPELINES_SHOW_EXPANDED = 10
+KEDRO_RICH_CATALOG_LIST_THRESHOLD = 10

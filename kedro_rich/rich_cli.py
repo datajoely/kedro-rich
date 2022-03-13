@@ -48,7 +48,7 @@ from kedro_rich.catalog_utils import (
     get_datasets_by_pipeline,
     summarise_datasets_as_list,
 )
-from kedro_rich.settings import KEDRO_RICH_ENABLED, PIPELINES_SHOW_EXPANDED
+from kedro_rich.settings import KEDRO_RICH_CATALOG_LIST_THRESHOLD, KEDRO_RICH_ENABLED
 
 
 def _create_session(package_name: str, **kwargs):
@@ -225,7 +225,7 @@ def _prepare_rich_table(
     table = Table(show_header=True, header_style=Style(color="white"), box=box.ROUNDED)
     # only include namespace if at least one present in catalog
     includes_namespaces = any(x["namespace"] for x in records)
-    collapse_pipes = len(pipes.keys()) > PIPELINES_SHOW_EXPANDED
+    collapse_pipes = len(pipes.keys()) > KEDRO_RICH_CATALOG_LIST_THRESHOLD
 
     # define table headers
     namespace_columns = ["namespace"] if includes_namespaces else []
