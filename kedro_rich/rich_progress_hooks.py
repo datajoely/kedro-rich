@@ -26,7 +26,10 @@ from kedro_rich.catalog_utils import (
     split_catalog_namespace_key,
 )
 from kedro_rich.logo import print_kedro_logo
-from kedro_rich.settings import KEDRO_RICH_ENABLED, KEDRO_RICH_SHOW_DATASET_PROGRESS
+from kedro_rich.settings import (
+    KEDRO_RICH_PROGRESS_ENV_VAR_KEY,
+    KEDRO_RICH_SHOW_DATASET_PROGRESS,
+)
 
 
 class RichProgressHooks:
@@ -45,10 +48,11 @@ class RichProgressHooks:
     def before_pipeline_run(
         self, run_params: Dict[str, Any], pipeline: Pipeline, catalog: DataCatalog
     ):
-        """This method initialises the variables needed to track pipeline process"""
-        if (
-            os.environ.get(KEDRO_RICH_ENABLED, "False") == "True"
-        ):  # disable under ParallelRunner
+        """
+        This method initialises the variables needed to track pipeline process. This
+        will be disabled under parallel runner
+        """
+        if self._check_if_progress_bar_enabled():
             progress_desc_format = "[progress.description]{task.description}"
             progress_percentage_format = "[progress.percentage]{task.percentage:>3.0f}%"
             progress_activity_format = "{task.fields[activity]}"
@@ -177,6 +181,11 @@ class RichProgressHooks:
     def _add_task(self, desc: str, count: int) -> TaskID:
         """This method adds a task to the progress bar"""
         return self.progress.add_task(desc, total=count, activity="")
+
+    @staticmethod
+    def _check_if_progress_bar_enabled() -> bool:
+        """Convert env variable into boolean"""
+        return bool(int(os.environ.get(KEDRO_RICH_PROGRESS_ENV_VAR_KEY, "0")))
 
 
 class _KedroElapsedColumn(ProgressColumn):

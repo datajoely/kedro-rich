@@ -48,7 +48,10 @@ from kedro_rich.catalog_utils import (
     get_datasets_by_pipeline,
     summarise_datasets_as_list,
 )
-from kedro_rich.settings import KEDRO_RICH_CATALOG_LIST_THRESHOLD, KEDRO_RICH_ENABLED
+from kedro_rich.settings import (
+    KEDRO_RICH_CATALOG_LIST_THRESHOLD,
+    KEDRO_RICH_PROGRESS_ENV_VAR_KEY,
+)
 
 
 def _create_session(package_name: str, **kwargs):
@@ -134,10 +137,10 @@ def run(
         )
     runner = runner or "SequentialRunner"
     if parallel:
-        os.environ[KEDRO_RICH_ENABLED] = "False"
+        os.environ[KEDRO_RICH_PROGRESS_ENV_VAR_KEY] = "0"
         runner = "ParallelRunner"
     else:
-        os.environ[KEDRO_RICH_ENABLED] = "True"
+        os.environ[KEDRO_RICH_PROGRESS_ENV_VAR_KEY] = "1"
 
     runner_class = load_obj(runner, "kedro.runner")
 
@@ -156,7 +159,7 @@ def run(
             load_versions=load_version,
             pipeline_name=pipeline,
         )
-    del os.environ[KEDRO_RICH_ENABLED]
+    del os.environ[KEDRO_RICH_PROGRESS_ENV_VAR_KEY]
 
 
 @commands.group()
