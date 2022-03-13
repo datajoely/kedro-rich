@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 import click
 import rich_click
+import yaml
 from kedro.framework.cli.catalog import create_catalog
 from kedro.framework.cli.project import (
     ASYNC_ARG_HELP,
@@ -175,14 +176,15 @@ catalog.add_command(create_catalog)
 @catalog.command(cls=rich_click.RichCommand, name="list")
 @env_option
 @click.option(
-    "--to-json",
-    type=bool,
-    default=False,
-    help="Output the results as JSON",
-    is_flag=True,
+    "--style",
+    "-s",
+    default="yaml",
+    type=click.Choice(["yaml", "json", "table"], case_sensitive=False),
+    help="Output the 'yaml' (default) / 'json' results to stdout or pretty"
+    " print 'table' to console",
 )
 @click.pass_obj
-def list_datasets(metadata: ProjectMetadata, to_json: bool, env: str):
+def list_datasets(metadata: ProjectMetadata, style: str, env: str):
     """Detail datasets by type."""
 
     # Needed to avoid circular reference
@@ -195,9 +197,12 @@ def list_datasets(metadata: ProjectMetadata, to_json: bool, env: str):
     pipeline_datasets = get_datasets_by_pipeline(context.catalog, pipelines)
     mapped_datasets = summarise_datasets_as_list(pipeline_datasets, catalog_datasets)
     console = Console()
-    if to_json:
-        console.print_json(json.dumps(mapped_datasets))
-    else:
+
+    if style == "yaml":
+        console.out(yaml.safe_dump(mapped_datasets))
+    if style == "json":
+        console.out(json.dumps(mapped_datasets, indent=2))
+    elif style == "table":
         table = _prepare_rich_table(records=mapped_datasets, pipes=pipelines)
         console.print(
             "\n",
