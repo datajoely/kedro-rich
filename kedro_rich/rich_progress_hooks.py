@@ -97,7 +97,9 @@ class RichProgressHooks:
             self.progress.start()
         else:
             logger = logging.getLogger(__name__)
-            logger.warning("Rich progress bars are incompatible with ParallelRunner")
+            logger.warning(
+                "[orange1 bold]Progress bars are incompatible with ParallelRunner[/]",
+            )
 
     @hook_impl
     def before_dataset_loaded(self, dataset_name: str):

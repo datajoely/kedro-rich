@@ -6,7 +6,7 @@ KEDRO_RICH_SHOW_DATASET_PROGRESS = True
 KEDRO_RICH_LOGGING_HANDLER = {
     "class": "rich.logging.RichHandler",
     "level": "INFO",
-    "markup": False,
+    "markup": True,
     "log_time_format": "[%X]",
 }
 
