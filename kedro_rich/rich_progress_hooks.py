@@ -26,7 +26,7 @@ from kedro_rich.catalog_utils import (
     split_catalog_namespace_key,
 )
 from kedro_rich.logo import print_kedro_logo
-from kedro_rich.settings import KEDRO_RICH_ENABLED
+from kedro_rich.settings import KEDRO_RICH_ENABLED, KEDRO_RICH_SHOW_DATASET_PROGRESS
 
 
 class RichProgressHooks:
@@ -68,14 +68,24 @@ class RichProgressHooks:
             pipe_name = run_params.get("pipeline_name") or "__default__"
             input_cnt = len(self.pipeline_inputs)
             output_cnt = len(self.pipeline_outputs)
-            self.tasks = {
+
+            dataset_tasks = (
+                {
+                    "loads": self._add_task(desc="Loading datasets", count=input_cnt),
+                    "saves": self._add_task(desc="Saving datasets", count=output_cnt),
+                }
+                if KEDRO_RICH_SHOW_DATASET_PROGRESS
+                else {}
+            )
+
+            overall_task = {
                 "overall": self._add_task(
                     desc=f"Running [bright_magenta]'{pipe_name}'[/] pipeline",
                     count=self.task_count,
-                ),
-                "loads": self._add_task(desc="Loading datasets", count=input_cnt),
-                "saves": self._add_task(desc="Saving datasets", count=output_cnt),
+                )
             }
+
+            self.tasks = {**dataset_tasks, **overall_task}
 
             print_kedro_logo()
 
@@ -91,35 +101,39 @@ class RichProgressHooks:
         Add the last dataset loaded (from persistent storage)
         to progress display
         """
-        if self.progress:
-            dataset_name_namespaced = resolve_pipeline_namespace(dataset_name)
-            if dataset_name in self.pipeline_inputs:
-                dataset_type = self.io_datasets_in_catalog[dataset_name_namespaced]
-                dataset_desc = (
-                    f"📂{' ':<5}[i]{dataset_name}[/] ([bold cyan]{dataset_type}[/])"
-                )
-                self.progress.update(
-                    self.tasks["loads"], advance=1, activity=dataset_desc
-                )
+        if KEDRO_RICH_SHOW_DATASET_PROGRESS:
+            if self.progress:
+                dataset_name_namespaced = resolve_pipeline_namespace(dataset_name)
+                if dataset_name in self.pipeline_inputs:
+                    dataset_type = self.io_datasets_in_catalog[dataset_name_namespaced]
+                    dataset_desc = (
+                        f"📂{' ':<5}[i]{dataset_name}[/] ([bold cyan]{dataset_type}[/])"
+                    )
+                    self.progress.update(
+                        self.tasks["loads"], advance=1, activity=dataset_desc
+                    )
 
     @hook_impl
     def after_dataset_saved(self, dataset_name: str):
         """Add the last dataset persisted to progress display"""
-        if self.progress:
-            dataset_name_namespaced = resolve_pipeline_namespace(dataset_name)
+        if KEDRO_RICH_SHOW_DATASET_PROGRESS:
+            if self.progress:
+                dataset_name_namespaced = resolve_pipeline_namespace(dataset_name)
 
-            if dataset_name_namespaced in self.pipeline_outputs:
-                namespace, key = split_catalog_namespace_key(dataset_name)
+                if dataset_name_namespaced in self.pipeline_outputs:
+                    namespace, key = split_catalog_namespace_key(dataset_name)
 
-                data_string = f"[blue]{namespace}[/].{key}" if namespace else f"{key}"
+                    data_string = (
+                        f"[blue]{namespace}[/].{key}" if namespace else f"{key}"
+                    )
 
-                dataset_type = self.io_datasets_in_catalog[dataset_name_namespaced]
-                dataset_desc = (
-                    f"💾{' ':<5}[i]{data_string}[/] ([bold cyan]{dataset_type}[/])"
-                )
-                self.progress.update(
-                    self.tasks["saves"], advance=1, activity=dataset_desc
-                )
+                    dataset_type = self.io_datasets_in_catalog[dataset_name_namespaced]
+                    dataset_desc = (
+                        f"💾{' ':<5}[i]{data_string}[/] ([bold cyan]{dataset_type}[/])"
+                    )
+                    self.progress.update(
+                        self.tasks["saves"], advance=1, activity=dataset_desc
+                    )
 
     @hook_impl
     def before_node_run(self, node: Node):
@@ -145,8 +159,9 @@ class RichProgressHooks:
                 visible=True,
                 activity="[bold green]✓ Pipeline complete[/] ",
             )
-            self.progress.update(self.tasks["saves"], completed=100, visible=False)
-            self.progress.update(self.tasks["loads"], completed=100, visible=False)
+            if KEDRO_RICH_SHOW_DATASET_PROGRESS:
+                self.progress.update(self.tasks["saves"], completed=100, visible=False)
+                self.progress.update(self.tasks["loads"], completed=100, visible=False)
             time.sleep(0.1)  # allows the UI to clean up after the process ends
 
     def _init_progress_tasks(self, pipeline: Pipeline, catalog: DataCatalog):
