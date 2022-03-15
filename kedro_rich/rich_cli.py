@@ -138,8 +138,9 @@ def run(
         )
     runner = runner or "SequentialRunner"
     if parallel:
-        os.environ[KEDRO_RICH_PROGRESS_ENV_VAR_KEY] = "0"
         runner = "ParallelRunner"
+    else:
+        os.environ[KEDRO_RICH_PROGRESS_ENV_VAR_KEY] = "1"
 
     runner_class = load_obj(runner, "kedro.runner")
 
