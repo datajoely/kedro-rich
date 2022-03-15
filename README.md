@@ -26,17 +26,15 @@ I'm very much looking for help developing/testing this project so if you want to
 - At this point we also enable the [rich traceback handler](https://rich.readthedocs.io/en/stable/traceback.html).
 - In order enable this purely plug-in side (i.e. not making the user change `logging.yml`) I've had to do an ugly bit of monkey patching. Keen to come up with a better solution here.
 
-### Kedro `list-datasets` commands
+### Overridden `kedro catalog list` command
 
-In time, this could replace the `kedro catalog list` command with something easier to parse both by humans and machines.
+Accepts following options:
 
-The `kedro list-datasets` command will produce a table view of datasets and their associated pipelines:
+- `--style=yaml` provides YAML representation to stdout that can be piped into other utilities
+- `--style=json` provides JSON representation to stdout that can be piped into other utilities
+- `--style=table` provides pretty representation to console for human consumption
 
 ![list of datasets](static/list-datasets.png)
-
-Adding the `--to-json` flag will print out a JSON view of the catalog that can be visually inspected by humans and machines alike:
-
-![list of datasets](static/list-datasets-json.png)
 
 ## Install the plug-in
 
@@ -61,15 +59,3 @@ Running `make test-project` then `make-test-run` will...
 - Pull the 'spaceflights' `kedro-starter`
 - Install requirements
 - Execute `kedro run`
-
----------------------
-
-## Potential future ideas
-
-### `kedro jupyter` and  `kedro ipython`
-
-- We could change the current init process that as well as making the `catalog`, `session` and other objects available to the user we could also overload the `print` statement. That way the user gets [pretty notebooks](https://www.willmcgugan.com/blog/tech/post/rich-adds-support-for-jupyter-notebooks/) for free!
-
-    ```python
-    from rich.jupyter import print
-    ```
