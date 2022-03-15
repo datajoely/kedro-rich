@@ -6,7 +6,14 @@ import click
 import rich
 import rich.logging
 from kedro.framework.session import KedroSession
+from kedro.io.data_catalog import DataCatalog
+from kedro.pipeline.node import Node
 
+from kedro_rich.kedro_core_overrides import (
+    catalog_load_override,
+    catalog_save_override,
+    node_str_override,
+)
 from kedro_rich.settings import KEDRO_RICH_LOGGING_HANDLER
 
 
@@ -42,6 +49,16 @@ def apply_rich_logging_handler():
     )
 
 
+def override_kedro_logging():
+    """This method overrides default Kedro methods to prettify the logging
+    output, longer term this could just involve changes to Kedro core.
+    """
+
+    Node.__str__ = node_str_override
+    DataCatalog.load = catalog_load_override
+    DataCatalog.save = catalog_save_override
+
+
 def apply_rich_tracebacks():
     """
     This method ensures that tracebacks raised by the Kedro project
@@ -58,5 +75,6 @@ def start_up():
     """This method runs the setup methods needed to override
     certain defaults at start up
     """
+    override_kedro_logging()
     apply_rich_logging_handler()
     apply_rich_tracebacks()
