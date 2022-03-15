@@ -158,7 +158,8 @@ def run(
             load_versions=load_version,
             pipeline_name=pipeline,
         )
-    del os.environ[KEDRO_RICH_PROGRESS_ENV_VAR_KEY]
+    if os.environ.get(KEDRO_RICH_PROGRESS_ENV_VAR_KEY):
+        del os.environ[KEDRO_RICH_PROGRESS_ENV_VAR_KEY]
 
 
 @commands.group()
