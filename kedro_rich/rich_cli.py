@@ -199,7 +199,11 @@ def list_datasets(metadata: ProjectMetadata, style: str, env: str):
     console = Console()
 
     if style == "yaml":
-        console.out(yaml.safe_dump(mapped_datasets))
+        struct = {
+            f"{x['namespace']}.{x['key']}" if x["namespace"] else x["key"]: x
+            for x in mapped_datasets
+        }
+        console.out(yaml.safe_dump(struct))
     if style == "json":
         console.out(json.dumps(mapped_datasets, indent=2))
     elif style == "table":
