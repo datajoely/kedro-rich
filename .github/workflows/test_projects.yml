@@ -24,7 +24,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Pull spaceflights and install kedro-rich in editable mode
-        run: make test-project
+        run: make test-proj
 
       - name: Kedro run (sequential)
         run: make test-run
