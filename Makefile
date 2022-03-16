@@ -39,7 +39,6 @@ uninstall-pre-commit:
 
 test-proj:
 	pip install -e .
-	make install
 	rm -rf test_project/
 	yes test_project | kedro new --starter=spaceflights
 	pip install -r test_project/src/requirements.txt

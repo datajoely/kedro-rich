@@ -27,4 +27,16 @@ jobs:
         run: make test-proj
 
       - name: Kedro run (sequential)
-        run: make test-run
+        run: cd test_project; kedro run
+
+      - name: Kedro run (parallel)
+        run: cd test_project; kedro run --parallel
+
+      - name: Kedro catalog list (json)
+        run: cd test_project; kedro catalog list --style=json
+
+      - name: Kedro catalog list (yaml)
+        run: cd test_project; kedro catalog list --style=yaml
+
+      - name: Kedro catalog list (table)
+        run: cd test_project; kedro catalog list --style=table
