@@ -1,0 +1,30 @@
+name: kedro_rich_run
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  kedro_rich:
+    name: kedro_rich_run
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@main
+        with:
+          ref: develop
+
+      - uses: actions/setup-python@v1
+        with:
+          python-version: "3.8.x"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Pull spaceflights and install kedro-rich in editable mode
+        run: make test-project
+
+      - name: Kedro run (sequential)
+        run: make test-run
