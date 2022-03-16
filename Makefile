@@ -48,7 +48,7 @@ test-proj:
 	mv .telemetry test_project/
 
 test-run:
-	cd test_project; kedro rrun
+	cd test_project; kedro run
 
 clear-test-run:
 	rm -rf test_project/
