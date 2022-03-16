@@ -13,7 +13,7 @@ jobs:
       - name: Check out
         uses: actions/checkout@main
         with:
-          ref: develop
+          ref: main
 
       - uses: actions/setup-python@v1
         with:
