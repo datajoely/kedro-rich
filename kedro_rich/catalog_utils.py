@@ -143,7 +143,10 @@ def summarise_datasets_as_list(
     return sorted(
         (
             {
-                **{"dataset_type": v, "pipelines": pipeline_datasets.get(k, []),},
+                **{
+                    "dataset_type": v,
+                    "pipelines": pipeline_datasets.get(k, []),
+                },
                 **dict(
                     zip(
                         ("namespace", "key"),

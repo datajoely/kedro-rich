@@ -176,15 +176,16 @@ catalog.add_command(create_catalog)
 @catalog.command(cls=rich_click.RichCommand, name="list")
 @env_option
 @click.option(
-    "--style",
-    "-s",
+    "--format",
+    "-f",
+    "fmt",
     default="yaml",
     type=click.Choice(["yaml", "json", "table"], case_sensitive=False),
     help="Output the 'yaml' (default) / 'json' results to stdout or pretty"
     " print 'table' to console",
 )
 @click.pass_obj
-def list_datasets(metadata: ProjectMetadata, style: str, env: str):
+def list_datasets(metadata: ProjectMetadata, fmt: str, env: str):
     """Detail datasets by type."""
 
     # Needed to avoid circular reference
@@ -198,15 +199,15 @@ def list_datasets(metadata: ProjectMetadata, style: str, env: str):
     mapped_datasets = summarise_datasets_as_list(pipeline_datasets, catalog_datasets)
     console = Console()
 
-    if style == "yaml":
+    if fmt == "yaml":
         struct = {
             f"{x['namespace']}.{x['key']}" if x["namespace"] else x["key"]: x
             for x in mapped_datasets
         }
         console.out(yaml.safe_dump(struct))
-    if style == "json":
+    if fmt == "json":
         console.out(json.dumps(mapped_datasets, indent=2))
-    elif style == "table":
+    elif fmt == "table":
         table = _prepare_rich_table(records=mapped_datasets, pipes=pipelines)
         console.print(
             "\n",
