@@ -25,11 +25,11 @@ from kedro_rich.catalog_utils import (
     resolve_pipeline_namespace,
     split_catalog_namespace_key,
 )
-from kedro_rich.logo import print_kedro_logo
-from kedro_rich.settings import (
+from kedro_rich.constants import (
     KEDRO_RICH_PROGRESS_ENV_VAR_KEY,
     KEDRO_RICH_SHOW_DATASET_PROGRESS,
 )
+from kedro_rich.logo import print_kedro_logo
 
 
 class RichProgressHooks:

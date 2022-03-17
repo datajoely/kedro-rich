@@ -9,12 +9,12 @@ from kedro.framework.session import KedroSession
 from kedro.io.data_catalog import DataCatalog
 from kedro.pipeline.node import Node
 
+from kedro_rich.constants import KEDRO_RICH_LOGGING_HANDLER
 from kedro_rich.kedro_core_overrides import (
     catalog_load_override,
     catalog_save_override,
     node_str_override,
 )
-from kedro_rich.settings import KEDRO_RICH_LOGGING_HANDLER
 
 
 def apply_rich_logging_handler():

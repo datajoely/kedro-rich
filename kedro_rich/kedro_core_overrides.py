@@ -25,31 +25,31 @@ def node_str_override(self) -> str:
 def catalog_load_override(self, name: str, version: str = None) -> Any:
     """Loads a registered data set (Rich-ified output).
 
-        Args:
-            name: A data set to be loaded.
-            version: Optional argument for concrete data version to be loaded.
-                Works only with versioned datasets.
+    Args:
+        name: A data set to be loaded.
+        version: Optional argument for concrete data version to be loaded.
+            Works only with versioned datasets.
 
-        Returns:
-            The loaded data as configured.
+    Returns:
+        The loaded data as configured.
 
-        Raises:
-            DataSetNotFoundError: When a data set with the given name
-                has not yet been registered.
+    Raises:
+        DataSetNotFoundError: When a data set with the given name
+            has not yet been registered.
 
-        Example:
-        ::
+    Example:
+    ::
 
-            >>> from kedro.io import DataCatalog
-            >>> from kedro.extras.datasets.pandas import CSVDataSet
-            >>>
-            >>> cars = CSVDataSet(filepath="cars.csv",
-            >>>                   load_args=None,
-            >>>                   save_args={"index": False})
-            >>> io = DataCatalog(data_sets={'cars': cars})
-            >>>
-            >>> df = io.load("cars")
-        """
+        >>> from kedro.io import DataCatalog
+        >>> from kedro.extras.datasets.pandas import CSVDataSet
+        >>>
+        >>> cars = CSVDataSet(filepath="cars.csv",
+        >>>                   load_args=None,
+        >>>                   save_args={"index": False})
+        >>> io = DataCatalog(data_sets={'cars': cars})
+        >>>
+        >>> df = io.load("cars")
+    """
     load_version = Version(version, None) if version else None
     dataset = self._get_dataset(name, version=load_version)
 

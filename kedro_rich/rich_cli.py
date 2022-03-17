@@ -49,7 +49,7 @@ from kedro_rich.catalog_utils import (
     get_datasets_by_pipeline,
     summarise_datasets_as_list,
 )
-from kedro_rich.settings import (
+from kedro_rich.constants import (
     KEDRO_RICH_CATALOG_LIST_THRESHOLD,
     KEDRO_RICH_PROGRESS_ENV_VAR_KEY,
 )
