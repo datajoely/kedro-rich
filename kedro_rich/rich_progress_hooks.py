@@ -19,17 +19,17 @@ from rich.progress import (
 )
 from rich.text import Text
 
-from kedro_rich.catalog_utils import (
+from kedro_rich.constants import (
+    KEDRO_RICH_PROGRESS_ENV_VAR_KEY,
+    KEDRO_RICH_SHOW_DATASET_PROGRESS,
+)
+from kedro_rich.utilities.catalog_utils import (
     filter_datasets_by_pipeline,
     get_catalog_datasets,
     resolve_pipeline_namespace,
     split_catalog_namespace_key,
 )
-from kedro_rich.constants import (
-    KEDRO_RICH_PROGRESS_ENV_VAR_KEY,
-    KEDRO_RICH_SHOW_DATASET_PROGRESS,
-)
-from kedro_rich.logo import print_kedro_logo
+from kedro_rich.utilities.logo_utils import print_kedro_pipeline_init_screen
 
 
 class RichProgressHooks:
@@ -91,7 +91,7 @@ class RichProgressHooks:
 
             self.tasks = {**dataset_tasks, **overall_task}
 
-            print_kedro_logo()
+            print_kedro_pipeline_init_screen()
 
             # Start process
             self.progress.start()

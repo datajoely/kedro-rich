@@ -10,7 +10,7 @@ from kedro.io.data_catalog import DataCatalog
 from kedro.pipeline.node import Node
 
 from kedro_rich.constants import KEDRO_RICH_LOGGING_HANDLER
-from kedro_rich.kedro_core_overrides import (
+from kedro_rich.utilities.kedro_override_utils import (
     catalog_load_override,
     catalog_save_override,
     node_str_override,

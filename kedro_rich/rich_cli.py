@@ -44,14 +44,14 @@ from rich.panel import Panel
 from rich.style import Style
 from rich.table import Table
 
-from kedro_rich.catalog_utils import (
-    get_catalog_datasets,
-    get_datasets_by_pipeline,
-    summarise_datasets_as_list,
-)
 from kedro_rich.constants import (
     KEDRO_RICH_CATALOG_LIST_THRESHOLD,
     KEDRO_RICH_PROGRESS_ENV_VAR_KEY,
+)
+from kedro_rich.utilities.catalog_utils import (
+    get_catalog_datasets,
+    get_datasets_by_pipeline,
+    summarise_datasets_as_list,
 )
 
 

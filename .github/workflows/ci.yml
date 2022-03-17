@@ -33,10 +33,10 @@ jobs:
         run: cd test_project; kedro run --parallel
 
       - name: Kedro catalog list (json)
-        run: cd test_project; kedro catalog list --style=json
+        run: cd test_project; kedro catalog list --format=json
 
       - name: Kedro catalog list (yaml)
-        run: cd test_project; kedro catalog list --style=yaml
+        run: cd test_project; kedro catalog list --format=yaml
 
       - name: Kedro catalog list (table)
-        run: cd test_project; kedro catalog list --style=table
+        run: cd test_project; kedro catalog list --format=table
