@@ -53,7 +53,7 @@ The plug-in is in very early days so it will be a while before (if) this makes i
 
 ## Run end to end example
 
-Running `make test-project` then `make-test-run` will...
+Running `make test-project` then `make test-run` will...
 
 - Install the `kedro-rich` package into the environment
 - Pull the 'spaceflights' `kedro-starter`
