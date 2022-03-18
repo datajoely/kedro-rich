@@ -30,9 +30,9 @@ I'm very much looking for help developing/testing this project so if you want to
 
 Accepts following options:
 
-- `--style=yaml` provides YAML representation to stdout that can be piped into other utilities
-- `--style=json` provides JSON representation to stdout that can be piped into other utilities
-- `--style=table` provides pretty representation to console for human consumption
+- `--format=yaml` provides YAML representation to stdout that can be piped into other utilities
+- `--format=json` provides JSON representation to stdout that can be piped into other utilities
+- `--format=table` provides pretty representation to console for human consumption
 
 ![list of datasets](static/list-datasets.png)
 
