@@ -26,7 +26,7 @@ setup(
     description="Kedro-Rich",
     long_description=readme,
     long_description_content_type="text/markdown",
-    author="Kedro",
+    author="datajoely",
     python_requires=">=3.6, <3.9",
     install_requires=requires,
     license="Apache Software License (Apache 2.0)",

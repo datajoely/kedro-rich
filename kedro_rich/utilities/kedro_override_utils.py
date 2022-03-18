@@ -1,11 +1,15 @@
 """This module provides methods which we use to override default Kedro methods"""
 # pylint: disable=protected-access
-from typing import Any, Optional, Set
+import logging
+from typing import Any, Callable, Optional, Set
 
+from kedro.framework.session import KedroSession
 from kedro.io.core import AbstractVersionedDataSet, Version
 
+from kedro_rich.constants import KEDRO_RICH_LOGGING_HANDLER
 
-def node_str_override(self) -> str:
+
+def override_node_str(self) -> str:
     """This method rich-ifies the node.__str__ method"""
 
     def _drop_namespaces(xset: Set[str]) -> Optional[Set]:
@@ -22,7 +26,7 @@ def node_str_override(self) -> str:
     return f"{func_name}{inputs}{bridge}{outputs}"
 
 
-def catalog_load_override(self, name: str, version: str = None) -> Any:
+def override_catalog_load(self, name: str, version: str = None) -> Any:
     """Loads a registered data set (Rich-ified output).
 
     Args:
@@ -74,7 +78,7 @@ def catalog_load_override(self, name: str, version: str = None) -> Any:
     return result
 
 
-def catalog_save_override(self, name: str, data: Any) -> None:
+def override_catalog_save(self, name: str, data: Any) -> None:
     """Save data to a registered data set.
 
     Args:
@@ -123,3 +127,31 @@ def catalog_save_override(self, name: str, data: Any) -> None:
     # Log only if versioning is enabled for the data set
     if self._journal and version:
         self._journal.log_catalog(name, "save", version)
+
+
+def override_kedro_proj_logging_handler():
+    """
+    This function does two things:
+
+    (1) It mutates the dictionary provided by `logging.yml` to
+    use the `rich.logging.RichHandler` instead of the standard output one
+    (2) It enables the rich.Traceback handler so that exceptions are prettier
+    """
+
+    # ensure warnings are caught by logger not stout
+    logging.captureWarnings(True)
+
+    def _replace_console_handler(func: Callable) -> Callable:
+        """This function mutates the dictionary returned by reading logging.yml"""
+
+        def wrapped(*args, **kwargs):
+            logging_config = func(*args, **kwargs)
+            logging_config["handlers"]["console"] = KEDRO_RICH_LOGGING_HANDLER
+            return logging_config
+
+        return wrapped
+
+    # pylint: disable=protected-access
+    KedroSession._get_logging_config = _replace_console_handler(
+        KedroSession._get_logging_config
+    )
