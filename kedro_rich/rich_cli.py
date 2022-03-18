@@ -163,7 +163,7 @@ def run(
         del os.environ[KEDRO_RICH_PROGRESS_ENV_VAR_KEY]
 
 
-@commands.group()
+@commands.group(cls=rich_click.RichGroup)
 def catalog():
     """Commands for working with catalog."""
     pass

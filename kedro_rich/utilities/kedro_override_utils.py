@@ -3,8 +3,12 @@
 import logging
 from typing import Any, Callable, Optional, Set
 
+import rich
+from click.core import _check_multicommand
+from kedro.framework.cli.cli import KedroCLI
 from kedro.framework.session import KedroSession
 from kedro.io.core import AbstractVersionedDataSet, Version
+from rich.panel import Panel
 
 from kedro_rich.constants import KEDRO_RICH_LOGGING_HANDLER
 
@@ -155,3 +159,39 @@ def override_kedro_proj_logging_handler():
     KedroSession._get_logging_config = _replace_console_handler(
         KedroSession._get_logging_config
     )
+
+
+def override_kedro_cli_get_command():
+    """This method overrides the Click get_command() method
+    so that we can give the user a useful message if they try to do a Kedro
+    project command outside of a project directory
+    """
+
+    # pylint: disable=invalid-name
+    # pylint: disable=inconsistent-return-statements
+    def _get_command(self, ctx, cmd_name):
+        for source in self.sources:
+            rv = source.get_command(ctx, cmd_name)
+            if rv is not None:
+                if self.chain:
+                    _check_multicommand(self, cmd_name, rv)
+                return rv
+        if not self._metadata:
+
+            warn = "[orange1][b]You are not in a Kedro project[/]![/]"
+            result = "Project specific commands such as '[bright_cyan]run[/]' or \
+'[bright_cyan]jupyter[/]' are only available within a project directory."
+            solution = "[bright_black][b]Hint:[/] [i]Kedro is looking for a file called \
+'[magenta]pyproject.toml[/]', is one present in your current working directory?[/][/]"
+            msg = f"{warn} {result}\n\n{solution}"
+            console = rich.console.Console()
+            panel = Panel(
+                msg,
+                title=f"Command '{cmd_name}' not found",
+                expand=False,
+                border_style="dim",
+                title_align="left",
+            )
+            console.print("\n", panel, "\n")
+
+    KedroCLI.get_command = _get_command

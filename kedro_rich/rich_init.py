@@ -1,13 +1,14 @@
 """This module ensures that the rich logging and exceptions handlers are used"""
 import click
 import rich
-import rich.logging
+import rich.traceback
 from kedro.io.data_catalog import DataCatalog
 from kedro.pipeline.node import Node
 
 from kedro_rich.utilities.kedro_override_utils import (
     override_catalog_load,
     override_catalog_save,
+    override_kedro_cli_get_command,
     override_kedro_proj_logging_handler,
     override_node_str,
 )
@@ -41,4 +42,5 @@ def start_up():
     """
     override_kedro_proj_logging_handler()
     override_kedro_lib_logging()
+    override_kedro_cli_get_command()
     apply_rich_tracebacks()
