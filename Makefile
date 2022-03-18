@@ -34,7 +34,7 @@ uninstall-pre-commit:
 	pre-commit uninstall
 	pre-commit uninstall --hook-type pre-push
 
-test-proj:
+test-project:
 	pip install -e .
 	rm -rf test_project/
 	yes test_project | kedro new --starter=spaceflights
