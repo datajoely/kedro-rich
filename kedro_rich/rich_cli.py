@@ -3,14 +3,13 @@ Intended to be invoked via `kedro`."""
 import importlib
 import json
 import os
-from itertools import chain
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import click
 import rich_click
 import yaml
-from kedro.framework.cli.catalog import create_catalog
+from kedro.framework.cli.catalog import _create_session, create_catalog
 from kedro.framework.cli.project import (
     ASYNC_ARG_HELP,
     CONFIG_FILE_HELP,
@@ -30,6 +29,7 @@ from kedro.framework.cli.utils import (
     CONTEXT_SETTINGS,
     KedroCliError,
     _config_file_callback,
+    _get_values_as_tuple,
     _reformat_load_versions,
     _split_params,
     env_option,
@@ -53,20 +53,6 @@ from kedro_rich.utilities.catalog_utils import (
     get_datasets_by_pipeline,
     summarise_datasets_as_list,
 )
-
-
-def _create_session(package_name: str, **kwargs):
-    kwargs.setdefault("save_on_close", False)
-    try:
-        return KedroSession.create(package_name, **kwargs)
-    except Exception as exc:
-        raise KedroCliError(
-            f"Unable to instantiate Kedro session.\nError: {exc}"
-        ) from exc
-
-
-def _get_values_as_tuple(values: Iterable[str]) -> Tuple[str, ...]:
-    return tuple(chain.from_iterable(value.split(",") for value in values))
 
 
 @click.group(context_settings=CONTEXT_SETTINGS, name="kedro-rich")
