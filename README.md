@@ -15,7 +15,7 @@ I'm very much looking for help developing/testing this project so if you want to
 - Does exactly the same as a regular Kedro run but kicks the progress bars into account.
 - The load/save progress tasks focus purely on persisted data and ignore ephemeral `MemoryDataSets`.
 
-<https://user-images.githubusercontent.com/35801847/156947226-4d63663f-bdd4-4e36-af7c-af2eed34e2b1.mp4>
+![kedro-rich-run](https://user-images.githubusercontent.com/35801847/159065139-1f98e136-7725-480a-8a26-974bac1687bf.gif)
 
 - The progress bars are currently disabuled when using `ParallelRunner` since `MultiProcessing` is causing issues between `kedro` and `rich`. Further investigation if some sort of `Lock()` mechanism will allow for this to work.
 
