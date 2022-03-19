@@ -9,13 +9,13 @@ from kedro.pipeline import Pipeline
 
 
 def get_catalog_datasets(
-    catalog: DataCatalog, exclude: Tuple[str] = (), drop_params: bool = False
+    catalog: DataCatalog, exclude_types: Tuple[str] = (), drop_params: bool = False
 ) -> Dict[str, str]:
     """Filter to only persisted datasets"""
     datasets_filtered = {
         k: type(v).__name__
         for k, v in catalog.datasets.__dict__.items()
-        if type(v).__name__ not in exclude
+        if type(v).__name__ not in exclude_types
     }
     if drop_params:
         datasets_w_param_filter = {

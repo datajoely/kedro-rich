@@ -174,7 +174,7 @@ class RichProgressHooks:
         """This method initialises the key Hook constructor attributes"""
         self.task_count = len(pipeline.nodes)
         self.io_datasets_in_catalog = get_catalog_datasets(
-            catalog=catalog, exclude=("MemoryDataSet",)
+            catalog=catalog, exclude_types=("MemoryDataSet",)
         )
         (self.pipeline_inputs, self.pipeline_outputs,) = filter_datasets_by_pipeline(
             datasets=self.io_datasets_in_catalog, pipeline=pipeline
