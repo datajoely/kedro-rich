@@ -3,42 +3,16 @@ Intended to be invoked via `kedro`."""
 import importlib
 import json
 import os
-from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 import click
 import rich_click
 import yaml
 from kedro.framework.cli.catalog import _create_session, create_catalog
-from kedro.framework.cli.project import (
-    ASYNC_ARG_HELP,
-    CONFIG_FILE_HELP,
-    FROM_INPUTS_HELP,
-    FROM_NODES_HELP,
-    LOAD_VERSION_HELP,
-    NODE_ARG_HELP,
-    PARALLEL_ARG_HELP,
-    PARAMS_ARG_HELP,
-    PIPELINE_ARG_HELP,
-    RUNNER_ARG_HELP,
-    TAG_ARG_HELP,
-    TO_NODES_HELP,
-    TO_OUTPUTS_HELP,
-)
-from kedro.framework.cli.utils import (
-    CONTEXT_SETTINGS,
-    KedroCliError,
-    _config_file_callback,
-    _get_values_as_tuple,
-    _reformat_load_versions,
-    _split_params,
-    env_option,
-    split_string,
-)
-from kedro.framework.session import KedroSession
+from kedro.framework.cli.project import run
+from kedro.framework.cli.utils import CONTEXT_SETTINGS, env_option
 from kedro.framework.startup import ProjectMetadata
 from kedro.pipeline import Pipeline
-from kedro.utils import load_obj
 from rich import box
 from rich.panel import Panel
 from rich.style import Style
@@ -60,93 +34,46 @@ def commands():
     """Command line tools for manipulating a Kedro project."""
 
 
-@commands.command(cls=rich_click.RichCommand)
-@click.option(
-    "--from-inputs", type=str, default="", help=FROM_INPUTS_HELP, callback=split_string
-)
-@click.option(
-    "--to-outputs", type=str, default="", help=TO_OUTPUTS_HELP, callback=split_string
-)
-@click.option(
-    "--from-nodes", type=str, default="", help=FROM_NODES_HELP, callback=split_string
-)
-@click.option(
-    "--to-nodes", type=str, default="", help=TO_NODES_HELP, callback=split_string
-)
-@click.option("--node", "-n", "node_names", type=str, multiple=True, help=NODE_ARG_HELP)
-@click.option(
-    "--runner", "-r", type=str, default=None, multiple=False, help=RUNNER_ARG_HELP
-)
-@click.option("--parallel", "-p", is_flag=True, multiple=False, help=PARALLEL_ARG_HELP)
-@click.option("--async", "is_async", is_flag=True, multiple=False, help=ASYNC_ARG_HELP)
-@env_option
-@click.option("--tag", "-t", type=str, multiple=True, help=TAG_ARG_HELP)
-@click.option(
-    "--load-version",
-    "-lv",
-    type=str,
-    multiple=True,
-    help=LOAD_VERSION_HELP,
-    callback=_reformat_load_versions,
-)
-@click.option("--pipeline", type=str, default=None, help=PIPELINE_ARG_HELP)
-@click.option(
-    "--config",
-    "-c",
-    type=click.Path(exists=True, dir_okay=False, resolve_path=True),
-    help=CONFIG_FILE_HELP,
-    callback=_config_file_callback,
-)
-@click.option(
-    "--params", type=str, default="", help=PARAMS_ARG_HELP, callback=_split_params
-)
-def run(
-    tag,
-    env,
-    parallel,
-    runner,
-    is_async,
-    node_names,
-    to_nodes,
-    from_nodes,
-    from_inputs,
-    to_outputs,
-    load_version,
-    pipeline,
-    config,  # pylint: disable=unused-argument
-    params,
-):  # pylint: disable=too-many-arguments, too-many-locals
-    """Run the pipeline."""
-    if parallel and runner:
-        raise KedroCliError(
-            "Both --parallel and --runner options cannot be used together. "
-            "Please use either --parallel or --runner."
-        )
-    runner = runner or "SequentialRunner"
-    if parallel:
-        runner = "ParallelRunner"
-    else:
-        os.environ[KEDRO_RICH_PROGRESS_ENV_VAR_KEY] = "1"
+def handle_parallel_run(func: Callable) -> Callable:
+    """
+    This method raps the run command callback so that the
+    parallel runner is disabled
+    """
 
-    runner_class = load_obj(runner, "kedro.runner")
+    def wrapped(*args, **kwargs):
+        """
+        This method will add an environment variable if the user
+        selects a parallel run, kedro-rich will disable the progress bar in
+        that situation
+        """
 
-    tag = _get_values_as_tuple(tag) if tag else tag
-    node_names = _get_values_as_tuple(node_names) if node_names else node_names
-    package_name = str(Path.cwd().resolve().name)
-    with KedroSession.create(package_name, env=env, extra_params=params) as session:
-        session.run(
-            tags=tag,
-            runner=runner_class(is_async=is_async),
-            node_names=node_names,
-            from_nodes=from_nodes,
-            to_nodes=to_nodes,
-            from_inputs=from_inputs,
-            to_outputs=to_outputs,
-            load_versions=load_version,
-            pipeline_name=pipeline,
-        )
-    if os.environ.get(KEDRO_RICH_PROGRESS_ENV_VAR_KEY):
-        del os.environ[KEDRO_RICH_PROGRESS_ENV_VAR_KEY]
+        # Only run progress bars if (1) In complex mode (2) NOT ParallelRunner
+        if not kwargs["simple"]:
+            if not kwargs["parallel"]:
+                os.environ[KEDRO_RICH_PROGRESS_ENV_VAR_KEY] = "1"
+
+        # drop 'simple' kwarg as that doesn't exist in the original func
+        original_kwargs = {k: v for k, v in kwargs.items() if "simple" != k}
+        result = func(*args, **original_kwargs)
+
+        if os.environ.get(KEDRO_RICH_PROGRESS_ENV_VAR_KEY):
+            del os.environ[KEDRO_RICH_PROGRESS_ENV_VAR_KEY]
+        return result
+
+    return wrapped
+
+
+run.callback = handle_parallel_run(run.callback)
+run.__class__ = rich_click.RichCommand
+commands.add_command(
+    click.option(
+        "--simple",
+        "-s",
+        default=False,
+        is_flag=True,
+        help="Disable rich progress bars (simple mode)",
+    )(run)
+)
 
 
 @commands.group(cls=rich_click.RichGroup)
