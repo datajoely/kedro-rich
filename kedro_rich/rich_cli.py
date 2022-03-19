@@ -20,7 +20,7 @@ from kedro_rich.constants import KEDRO_RICH_PROGRESS_ENV_VAR_KEY
 from kedro_rich.utilities.catalog_utils import (
     get_catalog_datasets,
     get_datasets_by_pipeline,
-    summarise_datasets_as_list,
+    report_datasets_as_list,
 )
 from kedro_rich.utilities.formatting_utils import prepare_rich_table
 
@@ -104,7 +104,7 @@ def list_datasets(metadata: ProjectMetadata, fmt: str, env: str):
     context = session.load_context()
     catalog_datasets = get_catalog_datasets(context.catalog, drop_params=True)
     pipeline_datasets = get_datasets_by_pipeline(context.catalog, pipelines)
-    mapped_datasets = summarise_datasets_as_list(pipeline_datasets, catalog_datasets)
+    mapped_datasets = report_datasets_as_list(pipeline_datasets, catalog_datasets)
     console = Console()
 
     if fmt == "yaml":
