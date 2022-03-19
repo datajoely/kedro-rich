@@ -16,7 +16,7 @@ lint:
 	pre-commit run -a --hook-stage manual
 
 test:
-	pytest -vv tests
+	pytest -vv tests --cov
 
 clean:
 	rm -rf build dist pip-wheel-metadata .pytest_cache

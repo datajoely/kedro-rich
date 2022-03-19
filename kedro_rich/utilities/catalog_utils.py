@@ -132,7 +132,7 @@ def split_catalog_namespace_key(dataset_name: str) -> Tuple[Optional[str], str]:
     return None, dataset_name
 
 
-def summarise_datasets_as_list(
+def report_datasets_as_list(
     pipeline_datasets: Dict[str, List[str]], catalog_datasets: Dict[str, str]
 ) -> List[Dict[str, Any]]:
     """This method accepts the datasets present in the pipeline registry
