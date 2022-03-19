@@ -33,7 +33,7 @@ repos:
         language: system
         types: [file, python]
         files: ^kedro_rich/
-        entry: pylint --disable=unnecessary-pass
+        entry: pylint --disable=unnecessary-pass,too-many-locals
         stages: [commit]
       - id: pylint-quick-tests
         name: "Quick PyLint on tests/*"

@@ -3,7 +3,7 @@ Intended to be invoked via `kedro`."""
 import importlib
 import json
 import os
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Callable, Dict
 
 import click
 import rich_click
@@ -15,18 +15,14 @@ from kedro.framework.startup import ProjectMetadata
 from kedro.pipeline import Pipeline
 from rich import box
 from rich.panel import Panel
-from rich.style import Style
-from rich.table import Table
 
-from kedro_rich.constants import (
-    KEDRO_RICH_CATALOG_LIST_THRESHOLD,
-    KEDRO_RICH_PROGRESS_ENV_VAR_KEY,
-)
+from kedro_rich.constants import KEDRO_RICH_PROGRESS_ENV_VAR_KEY
 from kedro_rich.utilities.catalog_utils import (
     get_catalog_datasets,
     get_datasets_by_pipeline,
     summarise_datasets_as_list,
 )
+from kedro_rich.utilities.formatting_utils import prepare_rich_table
 
 
 @click.group(context_settings=CONTEXT_SETTINGS, name="kedro-rich")
@@ -85,7 +81,6 @@ def catalog():
 catalog.add_command(create_catalog)
 
 
-# pylint: disable=too-many-locals
 @catalog.command(cls=rich_click.RichCommand, name="list")
 @env_option
 @click.option(
@@ -121,7 +116,7 @@ def list_datasets(metadata: ProjectMetadata, fmt: str, env: str):
     if fmt == "json":
         console.out(json.dumps(mapped_datasets, indent=2))
     elif fmt == "table":
-        table = _prepare_rich_table(records=mapped_datasets, pipes=pipelines)
+        table = prepare_rich_table(records=mapped_datasets, pipes=pipelines)
         console.print(
             "\n",
             Panel(
@@ -132,104 +127,6 @@ def list_datasets(metadata: ProjectMetadata, fmt: str, env: str):
                 box=box.MINIMAL,
             ),
         )
-
-
-def _prepare_rich_table(
-    records: List[Dict[str, Any]], pipes: Dict[str, Pipeline]
-) -> Table:
-    """This method will build a rich.Table object based on the
-    a given list of records and a dictionary of registered pipelines
-
-    Args:
-        records (List[Dict[str, Any]]): The catalog records
-        pipes (Dict[str, Pipeline]): The pipelines to map to linked datasets
-
-    Returns:
-        Table: The table to render
-    """
-
-    table = Table(show_header=True, header_style=Style(color="white"), box=box.ROUNDED)
-    # only include namespace if at least one present in catalog
-    includes_namespaces = any(x["namespace"] for x in records)
-    collapse_pipes = len(pipes.keys()) > KEDRO_RICH_CATALOG_LIST_THRESHOLD
-
-    # define table headers
-    namespace_columns = ["namespace"] if includes_namespaces else []
-    pipe_columns = ["pipeline_count"] if collapse_pipes else list(pipes.keys())
-    columns_to_add = namespace_columns + ["dataset_name", "dataset_type"] + pipe_columns
-
-    # add table headers
-    for column in columns_to_add:
-        table.add_column(column, justify="center")
-
-    # add table rows
-    for index, row in enumerate(records):
-
-        # work out if the dataset_type is the same / different to next row
-        same_section, new_section = _describe_boundary(
-            index=index,
-            records=records,
-            key="dataset_type",
-            current_value=row["dataset_type"],
-        )
-
-        # add namespace if present
-        if includes_namespaces:
-            table_namespace = (
-                [row["namespace"]] if row["namespace"] else ["[bright_black]n/a[/]"]
-            )
-        else:
-            table_namespace = []
-
-        # get catalog key
-        table_dataset_name = [row["key"]]
-
-        # get dataset_type, only show if different from the last record
-        table_dataset_type = (
-            [f"[magenta][b]{row['dataset_type']}[/][/]"] if new_section else [""]
-        )
-
-        # get pipelines attached to this dataset
-        dataset_pipes = row["pipelines"]
-        # get pipelines registered in this project
-        proj_pipes = sorted(pipes.keys())
-
-        # if too many pipelines registered, simply show the count
-        if collapse_pipes:
-            table_pipes = [str(len(dataset_pipes))]
-        else:
-            # show ✓ and ✘ if present
-            table_pipes = [
-                _check_cross(pipe in (set(proj_pipes) & set(dataset_pipes)))
-                for pipe in proj_pipes
-            ]
-
-        # build full row
-        renderables = (
-            table_namespace + table_dataset_name + table_dataset_type + table_pipes
-        )
-
-        # add row to table
-        table.add_row(*renderables, end_section=not same_section)
-    return table
-
-
-def _describe_boundary(
-    index: int, records: List[Dict[str, Any]], key: str, current_value: str
-) -> Tuple[bool, bool]:
-    """
-    Give a list of dictionaries, key and current value this method will
-    return two booleans detailing if the sequence has changed or not
-    """
-    same_section = index + 1 < len(records) and records[index + 1][key] == current_value
-    new_section = index == 0 or records[index - 1][key] != current_value
-
-    return same_section, new_section
-
-
-def _check_cross(overlap: bool) -> str:
-    """Retrun check or cross mapped to True or False"""
-    return "[bold green]✓[/]" if overlap else "[bold red]✘[/]"
 
 
 def _get_pipeline_registry(proj_metadata: ProjectMetadata) -> Dict[str, Pipeline]:

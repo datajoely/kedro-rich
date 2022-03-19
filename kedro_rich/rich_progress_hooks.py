@@ -29,7 +29,7 @@ from kedro_rich.utilities.catalog_utils import (
     resolve_pipeline_namespace,
     split_catalog_namespace_key,
 )
-from kedro_rich.utilities.logo_utils import print_kedro_pipeline_init_screen
+from kedro_rich.utilities.formatting_utils import print_kedro_pipeline_init_screen
 
 
 class RichProgressHooks:
