@@ -59,7 +59,7 @@ def filter_datasets_by_pipeline(
 
 
 def get_datasets_by_pipeline(
-    catalog: DataCatalog, pipelines: Dict[str, Pipeline]
+    catalog: DataCatalog, registry: Dict[str, Pipeline]
 ) -> Dict[str, List[str]]:
     """This method will return a dictionary of datasets mapped to the
     list of pipelines they are used within
@@ -77,7 +77,7 @@ def get_datasets_by_pipeline(
     # get node input and outputs
     pipeline_input_output_datasets = {
         pipeline_name: filter_datasets_by_pipeline(catalog_datasets, pipeline)
-        for pipeline_name, pipeline in pipelines.items()
+        for pipeline_name, pipeline in registry.items()
     }
 
     # get those that overlap with pipelines

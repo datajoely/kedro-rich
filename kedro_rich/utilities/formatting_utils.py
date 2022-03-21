@@ -14,7 +14,7 @@ from kedro_rich.constants import KEDRO_RICH_CATALOG_LIST_THRESHOLD
 
 
 def prepare_rich_table(
-    records: List[Dict[str, Any]], pipes: Dict[str, Pipeline]
+    records: List[Dict[str, Any]], registry: Dict[str, Pipeline]
 ) -> Table:
     """This method will build a rich.Table object based on the
     a given list of records and a dictionary of registered pipelines
@@ -30,11 +30,11 @@ def prepare_rich_table(
     table = Table(show_header=True, header_style=Style(color="white"), box=box.ROUNDED)
     # only include namespace if at least one present in catalog
     includes_namespaces = any(x["namespace"] for x in records)
-    collapse_pipes = len(pipes.keys()) > KEDRO_RICH_CATALOG_LIST_THRESHOLD
+    collapse_pipes = len(registry.keys()) > KEDRO_RICH_CATALOG_LIST_THRESHOLD
 
     # define table headers
     namespace_columns = ["namespace"] if includes_namespaces else []
-    pipe_columns = ["pipeline_count"] if collapse_pipes else list(pipes.keys())
+    pipe_columns = ["pipeline_count"] if collapse_pipes else list(registry.keys())
     columns_to_add = namespace_columns + ["dataset_name", "dataset_type"] + pipe_columns
 
     # add table headers
@@ -43,6 +43,20 @@ def prepare_rich_table(
 
     # add table rows
     for index, row in enumerate(records):
+
+        def _describe_boundary(
+            index: int, records: List[Dict[str, Any]], key: str, current_value: str
+        ) -> Tuple[bool, bool]:
+            """
+            Give a list of dictionaries, key and current value this method will
+            return two booleans detailing if the sequence has changed or not
+            """
+            same_section = (
+                index + 1 < len(records) and records[index + 1][key] == current_value
+            )
+            new_section = index == 0 or records[index - 1][key] != current_value
+
+            return same_section, new_section
 
         # work out if the dataset_type is the same / different to next row
         same_section, new_section = _describe_boundary(
@@ -71,15 +85,18 @@ def prepare_rich_table(
         # get pipelines attached to this dataset
         dataset_pipes = row["pipelines"]
         # get pipelines registered in this project
-        proj_pipes = sorted(pipes.keys())
+        proj_pipes = sorted(registry.keys())
 
         # if too many pipelines registered, simply show the count
         if collapse_pipes:
             table_pipes = [str(len(dataset_pipes))]
         else:
+
             # show ✓ and ✘ if present
             table_pipes = [
-                _check_cross(pipe in (set(proj_pipes) & set(dataset_pipes)))
+                "[bold green]✓[/]"
+                if (pipe in (set(proj_pipes) & set(dataset_pipes)))
+                else "[bold red]✘[/]"
                 for pipe in proj_pipes
             ]
 
@@ -113,10 +130,20 @@ def get_kedro_logo(color: str = "orange1") -> Optional[List[str]]:
     return color_rows
 
 
-def print_kedro_pipeline_init_screen():
+def print_kedro_pipeline_init_screen(
+    title_color: str = "orange1", tagline_color: str = "gray"
+):
     """This method prints the Kedro logo and package metadata"""
+
+    tagline_text = "Reproducible, maintainable and modular data science code"
+    lib_info = dict(
+        title=f"[{title_color}][b]KEDRO[/][/{title_color}] ({kedro.__version__})",
+        tagline=f"[{tagline_color}][i]{tagline_text}[/][/]",
+        github="https://github.com/kedro-org/kedro",
+        rtd="https://kedro.readthedocs.io",
+    )
+
     logo_rows = get_kedro_logo()
-    lib_info = _get_library_info()
     mapping = ((2, "title"), (3, "tagline"), (-3, "github"), (-2, "rtd"))
     for index, key in mapping:
         spacing = (51 - len(logo_rows[index])) * " "
@@ -124,33 +151,3 @@ def print_kedro_pipeline_init_screen():
 
     str_rows = "\n".join(logo_rows)
     Console().print(str_rows, no_wrap=True)
-
-
-def _describe_boundary(
-    index: int, records: List[Dict[str, Any]], key: str, current_value: str
-) -> Tuple[bool, bool]:
-    """
-    Give a list of dictionaries, key and current value this method will
-    return two booleans detailing if the sequence has changed or not
-    """
-    same_section = index + 1 < len(records) and records[index + 1][key] == current_value
-    new_section = index == 0 or records[index - 1][key] != current_value
-
-    return same_section, new_section
-
-
-def _check_cross(overlap: bool) -> str:
-    """Retrun check or cross mapped to True or False"""
-    return "[bold green]✓[/]" if overlap else "[bold red]✘[/]"
-
-
-def _get_library_info(title_color: str = "orange1", tagline_color: str = "gray"):
-    """This method collects package information to present to the user"""
-    tagline_text = "Reproducible, maintainable and modular data science code"
-    version_data = dict(
-        title=f"[{title_color}][b]KEDRO[/][/{title_color}] ({kedro.__version__})",
-        tagline=f"[{tagline_color}][i]{tagline_text}[/][/]",
-        github="https://github.com/kedro-org/kedro",
-        rtd="https://kedro.readthedocs.io",
-    )
-    return version_data

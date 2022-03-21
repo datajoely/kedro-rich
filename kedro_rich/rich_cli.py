@@ -116,7 +116,7 @@ def list_datasets(metadata: ProjectMetadata, fmt: str, env: str):
     if fmt == "json":
         console.out(json.dumps(mapped_datasets, indent=2))
     elif fmt == "table":
-        table = prepare_rich_table(records=mapped_datasets, pipes=pipelines)
+        table = prepare_rich_table(records=mapped_datasets, registry=pipelines)
         console.print(
             "\n",
             Panel(
