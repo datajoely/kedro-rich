@@ -6,7 +6,7 @@ on:
 
 jobs:
   kedro_rich:
-    name: kedro_rich_run
+    name: kedro_rich_run_and_test
     runs-on: ubuntu-latest
 
     steps:
@@ -40,3 +40,6 @@ jobs:
 
       - name: Kedro catalog list (table)
         run: cd test_project; kedro catalog list --format=table
+
+      - name: Run PyTest
+        run: make test
