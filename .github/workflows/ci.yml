@@ -2,7 +2,11 @@ name: kedro_rich_run
 
 on:
   push:
-    branches: [ main ]
+    branches: [ test ]
+
+env:
+  COLUMNS: 160
+  LINES: 25
 
 jobs:
   kedro_rich:
@@ -11,9 +15,9 @@ jobs:
 
     steps:
       - name: Check out
-        uses: actions/checkout@main
+        uses: actions/checkout@test
         with:
-          ref: main
+          ref: test
 
       - uses: actions/setup-python@v1
         with:
